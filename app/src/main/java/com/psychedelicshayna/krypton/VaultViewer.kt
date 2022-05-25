@@ -61,12 +61,17 @@ class VaultViewer : AppCompatActivity() {
 
         svAccountSearch.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(text: String?): Boolean {
+
                 return false
             }
 
             override fun onQueryTextChange(text: String?): Boolean {
-                if(text != null) {
-                    vaultAccountAdapter.updateAccountNameFilter(text)
+                if(text == null) return false
+
+                if(text.isEmpty()) {
+                    vaultAccountAdapter.clearAccountNameFilter()
+                } else {
+                    vaultAccountAdapter.setAccountNameFilter(text)
                 }
 
                 return true

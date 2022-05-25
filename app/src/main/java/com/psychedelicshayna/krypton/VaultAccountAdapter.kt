@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_vault_account.view.*
+import java.util.*
 
 class VaultAccountAdapter(
     private val vaultAccounts:MutableList<VaultAccount>
@@ -12,6 +13,7 @@ class VaultAccountAdapter(
     class VaultAccountViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     private val vaultAccountsFilterReference:MutableList<VaultAccount> = mutableListOf()
+    private var vaultAccountNameFilterActive:Boolean = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VaultAccountViewHolder {
         return VaultAccountViewHolder(
@@ -58,34 +60,42 @@ class VaultAccountAdapter(
         notifyItemRangeRemoved(0, elementsRemoved)
     }
 
-    fun itemAt(index:Int): VaultAccount? {
+    fun itemAt(index: Int): VaultAccount? {
         if(index >= vaultAccounts.size) return null
         return vaultAccounts[index]
     }
 
-    fun updateAccountNameFilter(filterText:String) {
-       if(filterText.isBlank() && vaultAccountsFilterReference.isNotEmpty()) {
-           vaultAccounts.clear()
-           vaultAccounts.addAll(vaultAccountsFilterReference)
-           vaultAccountsFilterReference.clear()
-       } else {
-           if(vaultAccountsFilterReference.isEmpty()) {
-               vaultAccountsFilterReference.addAll(vaultAccounts)
-           }
+    fun clearAccountNameFilter() {
+        if(vaultAccountsFilterReference.isNotEmpty()) {
+            val elementsRemoved: Int = vaultAccounts.size
+            vaultAccounts.clear()
 
-           for(i in 0 until vaultAccounts.size - 1) {
-               vaultAccounts.removeAt(i)
-               notifyItemRemoved(i)
-           }
+            notifyItemRangeRemoved(0, elementsRemoved)
 
-           for(i in 0 until vaultAccountsFilterReference.size - 1) {
-               val vaultAccount:VaultAccount = vaultAccountsFilterReference[i]
+            vaultAccounts.addAll(vaultAccountsFilterReference)
+            notifyItemRangeInserted(0, vaultAccounts.size)
 
-               if(vaultAccount.AccountName.contains(filterText)) {
-                   vaultAccounts.add(vaultAccount)
-                   notifyItemInserted(vaultAccounts.size - 1)
-               }
-           }
-       }
+            vaultAccountsFilterReference.clear()
+        }
+    }
+
+    fun setAccountNameFilter(filterText: String) {
+        if(vaultAccountsFilterReference.isEmpty()) {
+            vaultAccountsFilterReference.addAll(vaultAccounts)
+        }
+
+        val elementsRemoved: Int = vaultAccounts.size
+        vaultAccounts.clear()
+
+        notifyItemRangeRemoved(0, elementsRemoved)
+
+        for(index in 0 until vaultAccountsFilterReference.size) {
+            val vaultAccount = vaultAccountsFilterReference[index]
+
+            if(vaultAccount.AccountName.toLowerCase(Locale.ROOT).contains(filterText.toLowerCase(Locale.ROOT))) {
+                vaultAccounts.add(vaultAccount)
+                notifyItemInserted(vaultAccounts.size)
+            }
+        }
     }
 }
