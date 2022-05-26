@@ -17,11 +17,14 @@ import kotlinx.android.synthetic.main.new_account_prompt.view.*
 
 class VaultViewer : AppCompatActivity() {
     private lateinit var vaultAccountAdapter:VaultAccountAdapter
+    private var vaultFilePath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_vault_viewer)
+
         vaultAccountAdapter = VaultAccountAdapter(mutableListOf())
+        vaultFilePath = intent.getStringExtra("VaultFilePath")
 
         rvVaultAccounts.adapter = vaultAccountAdapter
         rvVaultAccounts.layoutManager = LinearLayoutManager(this)
