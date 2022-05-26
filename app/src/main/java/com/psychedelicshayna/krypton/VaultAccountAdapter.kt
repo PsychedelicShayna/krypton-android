@@ -35,9 +35,18 @@ class VaultAccountAdapter(
         return vaultAccounts.size
     }
 
-    fun addVaultAccount(vaultAccount: VaultAccount) {
+    fun addVaultAccount(vaultAccount: VaultAccount): Boolean {
+        val duplicate: Boolean = vaultAccounts.any { element ->
+            element.AccountName == vaultAccount.AccountName
+        }
+
+        if(duplicate) {
+            return false
+        }
+
         vaultAccounts.add(vaultAccount)
         notifyItemInserted(vaultAccounts.size - 1)
+        return true
     }
 
     fun removeVaultAccount(vaultAccountIndex: Int) {

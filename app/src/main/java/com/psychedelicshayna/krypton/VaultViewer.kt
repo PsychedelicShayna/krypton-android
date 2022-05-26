@@ -39,14 +39,17 @@ class VaultViewer : AppCompatActivity() {
 
             alertDialogBuilder.apply {
                 setCancelable(true)
-
                 setTitle("Enter Account Name")
 
                 setPositiveButton("Add") { _, _ ->
                     val accountName:String = etAccountName.text.toString()
 
                     if(accountName.isNotBlank()) {
-                        vaultAccountAdapter.addVaultAccount(VaultAccount(etAccountName.text.toString()))
+                        val success = vaultAccountAdapter.addVaultAccount(VaultAccount(etAccountName.text.toString()))
+
+                        if(!success) {
+                            Toast.makeText(this.context, "An account with that name already exists!", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
 
