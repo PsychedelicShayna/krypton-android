@@ -12,38 +12,38 @@ android:layout_height="match_parent">
     android:layout_height="0dp"
     android:layout_marginTop="4dp"
     android:layout_marginBottom="24dp"
-    app:layout_constraintBottom_toTopOf="@+id/btAddAccount"
+    app:layout_constraintBottom_toTopOf="@+id/btnAddAccount"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintHorizontal_bias="0"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@+id/svAccountSearch" />
 
     <Button
-        android:id="@+id/btSave"
+        android:id="@+id/btnSave"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:text="Save"
-        app:layout_constraintBottom_toTopOf="@+id/btRevertChanges"
-        app:layout_constraintEnd_toStartOf="@+id/btSaveAs"
+        app:layout_constraintBottom_toTopOf="@+id/btnRevertChanges"
+        app:layout_constraintEnd_toStartOf="@+id/btnSaveAs"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btRevertChanges"
+        android:id="@+id/btnRevertChanges"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:text="Revert Changes"
-        app:layout_constraintBottom_toTopOf="@+id/btDiff"
+        app:layout_constraintBottom_toTopOf="@+id/btnDiff"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btDiff"
+        android:id="@+id/btnDiff"
         android:layout_width="0dp"
         android:layout_height="59dp"
         android:layout_marginStart="8dp"
@@ -51,11 +51,11 @@ android:layout_height="match_parent">
         android:layout_marginBottom="16dp"
         android:text="Diff"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btSecurity"
+        app:layout_constraintEnd_toStartOf="@+id/btnSecurity"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btSecurity"
+        android:id="@+id/btnSecurity"
         android:layout_width="0dp"
         android:layout_height="59dp"
         android:layout_marginStart="8dp"
@@ -64,32 +64,32 @@ android:layout_height="match_parent">
         android:text="Security"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btDiff" />
+        app:layout_constraintStart_toEndOf="@+id/btnDiff" />
 
     <Button
-        android:id="@+id/btAddAccount"
+        android:id="@+id/btnAddAccount"
         android:layout_width="0dp"
         android:layout_height="61dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:text="Add Account"
-        app:layout_constraintBottom_toTopOf="@+id/btSaveAs"
+        app:layout_constraintBottom_toTopOf="@+id/btnSaveAs"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/rvVaultAccounts" />
 
     <Button
-        android:id="@+id/btSaveAs"
+        android:id="@+id/btnSaveAs"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:text="Save As"
-        app:layout_constraintBottom_toTopOf="@+id/btRevertChanges"
+        app:layout_constraintBottom_toTopOf="@+id/btnRevertChanges"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btSave" />
+        app:layout_constraintStart_toEndOf="@+id/btnSave" />
 
     <SearchView
         android:id="@+id/svAccountSearch"
