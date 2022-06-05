@@ -28,7 +28,10 @@ import java.security.MessageDigest
 
 class VaultViewer : AppCompatActivity() {
     private lateinit var vaultAccountAdapter: VaultAccountAdapter
+    private val backupOfVaultAccounts: MutableList<VaultAccount> = mutableListOf()
+
     private val vaultSecurity: VaultSecurity = VaultSecurity()
+
     private var receivedVaultFileUri: Uri? = null
     private var vaultWasDecryptedWhenLoading: Boolean = false
     private val saveVaultAsActivityResultRequestCode: Int = 2
@@ -42,10 +45,6 @@ class VaultViewer : AppCompatActivity() {
                 saveVaultAs(it)
             }
         }
-    }
-
-    private fun revertVaultChanges() {
-
     }
 
     private fun diffVault() {
@@ -118,6 +117,9 @@ class VaultViewer : AppCompatActivity() {
 
                 vaultAccountAdapter.addVaultAccount(VaultAccount(accountName, accountEntriesMap))
             }
+
+            backupOfVaultAccounts.clear()
+            backupOfVaultAccounts.addAll(vaultAccountAdapter.getVaultAccounts())
         } catch(exception: JSONException) {
             Toast.makeText(this, "Encountered exception when adding entries to viewer. " +
                     "The JSON was loaded and parsed, but the structure might be wrong.", Toast.LENGTH_LONG).show()
@@ -219,6 +221,9 @@ class VaultViewer : AppCompatActivity() {
 
                 etIntegrityCheckRamHash.setTextColor(Color.GREEN)
                 etIntegrityCheckDiskHash.setTextColor(Color.GREEN)
+
+                backupOfVaultAccounts.clear()
+                backupOfVaultAccounts.addAll(vaultAccountAdapter.getVaultAccounts())
             } else {
                 setTitle("Integrity Check Failed!")
                 setMessage("The SHA-256 hash of the vault in RAM does not match the hash of the vault on the disk! The data was not stored properly. " +
@@ -408,7 +413,11 @@ class VaultViewer : AppCompatActivity() {
         }
 
         btnSaveAs.setOnClickListener        { saveVaultAs() }
-        btnRevertChanges.setOnClickListener { revertVaultChanges() }
+
+        btnRevertChanges.setOnClickListener {
+            vaultAccountAdapter.setVaultAccounts(backupOfVaultAccounts.toTypedArray())
+        }
+
         btnDiff.setOnClickListener          { diffVault() }
         btnSecurity.setOnClickListener      { configureVaultSecurity() }
 
