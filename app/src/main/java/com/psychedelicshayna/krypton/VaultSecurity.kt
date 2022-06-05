@@ -16,7 +16,8 @@ class VaultSecurity {
     val aesBlockSize: Int = 16
 
     private var ivMaskLength: Int = aesBlockSize
-    private var derivedArgon2Key: Argon2.Result? = null
+    private var derivedAesCipherKey: Argon2.Result? = null
+    private var passwordSha256: ByteArray? = null
 
     private fun applyPkcs7Padding(data: ByteArray, multiple: Int = 16): ByteArray {
         val delta: Int = multiple - (data.size % multiple)
@@ -59,7 +60,7 @@ class VaultSecurity {
         return digest
     }
 
-    fun deriveAesCipherKey(password: String): Argon2.Result {
+    private fun deriveAesCipherKey(password: String): Argon2.Result {
         val argon2: Argon2 = Argon2.Builder(Version.V13).let {
             it.type(Type.Argon2id)
             it.memoryCost(MemoryCost.MiB(32))
@@ -79,7 +80,7 @@ class VaultSecurity {
         return Cipher.getInstance("AES_256/CBC/NoPadding").apply {
             init(
                 cipherMode,
-                SecretKeySpec(derivedArgon2Key!!.hash, "AES"),
+                SecretKeySpec(derivedAesCipherKey!!.hash, "AES"),
                 IvParameterSpec(ByteArray(aesBlockSize).apply {
                     secureRandom.nextBytes(this)
                 })
@@ -109,7 +110,11 @@ class VaultSecurity {
                 "The provided IV mask length is smaller than the AES block size of $aesBlockSize bytes!")
         }
 
-        derivedArgon2Key = deriveAesCipherKey(password)
+        derivedAesCipherKey = deriveAesCipherKey(password)
+        passwordSha256 = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
         this.ivMaskLength = ivMaskLength
     }
+
+    fun verifyPassword(password: String): Boolean =
+        passwordSha256?.contentEquals(MessageDigest.getInstance("SHA-256").digest(password.toByteArray())) ?: false
 }
