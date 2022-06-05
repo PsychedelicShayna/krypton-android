@@ -13,6 +13,7 @@ import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.ContentInfoCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_account_viewer.*
 import kotlinx.android.synthetic.main.dialog_integrity_check_result.*
@@ -30,6 +31,18 @@ class VaultViewer : AppCompatActivity() {
     private val vaultSecurity: VaultSecurity = VaultSecurity()
     private var receivedVaultFileUri: Uri? = null
     private var vaultWasDecryptedWhenLoading: Boolean = false
+    private val saveVaultAsActivityResultRequestCode: Int = 2
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+
+        if(resultCode == RESULT_OK && requestCode == saveVaultAsActivityResultRequestCode) {
+            resultData?.data?.also {
+                contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                saveVaultAs(it)
+            }
+        }
+    }
 
     private fun revertVaultChanges() {
 
@@ -124,6 +137,25 @@ class VaultViewer : AppCompatActivity() {
             }
         }
 
+        saveVaultAs(vaultFileUri)
+    }
+
+    private fun saveVaultAs(uri: Uri? = null) {
+        val vaultFileUri: Uri = uri.let {
+            if(it != null) {
+                it
+            } else {
+                Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    type = "*/*.vlt"
+
+                    startActivityForResult(this, saveVaultAsActivityResultRequestCode)
+                }
+
+                return@saveVaultAs
+            }
+        }
+
         val vaultData: ByteArray = dumpVaultJson().toString().toByteArray()
         val vaultDataHash: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
 
@@ -196,10 +228,6 @@ class VaultViewer : AppCompatActivity() {
                 etIntegrityCheckDiskHash.setTextColor(Color.RED)
             }
         }.create().show()
-    }
-
-    private fun saveVaultAs() {
-
     }
 
     private fun loadVaultFile(vaultFileUri: Uri) {
