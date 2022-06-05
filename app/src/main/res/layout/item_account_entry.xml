@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="100dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+>
+
+    <TextView
+        android:id="@+id/tvAccountEntryName"
+        android:text="Entry Name"
+        android:layout_width="0dp"
+        android:layout_height="25dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dividerEntryPair"
+        android:layout_marginTop="8dp"
+        android:scrollbars="vertical"/>
+
+    <View
+        android:id="@+id/dividerEntryPair"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAccountEntryName"
+        app:layout_constraintBottom_toBottomOf="@id/tvAccountEntryValue"/>
+
+
+    <TextView
+        android:id="@+id/tvAccountEntryValue"
+        android:text="Entry Value"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+
+        android:layout_marginTop="4dp"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dividerEntryPair"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:scrollbars="horizontal"
+    />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
