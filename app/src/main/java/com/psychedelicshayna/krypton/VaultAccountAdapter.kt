@@ -3,17 +3,26 @@ package com.psychedelicshayna.krypton
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.InspectableProperty
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_vault_account.view.*
+import java.lang.IndexOutOfBoundsException
 import java.util.*
 
 class VaultAccountAdapter(
-    private val vaultAccounts:MutableList<VaultAccount>
+    private val vaultAccounts: MutableList<VaultAccount>
 ) : RecyclerView.Adapter<VaultAccountAdapter.VaultAccountViewHolder>() {
     class VaultAccountViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    private val displayedVaultAccounts: MutableList<VaultAccount> = mutableListOf()
 
-    private val vaultAccountsFilterReference:MutableList<VaultAccount> = mutableListOf()
-    private var vaultAccountNameFilterActive:Boolean = false
+    private val vaultAccountsFilterReference: MutableList<VaultAccount> = mutableListOf()
+    private var accountNameFilterString: String = ""
+
+    var vaultAccountViewClickListener: (VaultAccountViewHolder, Int) -> Unit = { _, _ -> }
+
+    init {
+        displayedVaultAccounts.addAll(vaultAccounts)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VaultAccountViewHolder {
         return VaultAccountViewHolder(
@@ -27,83 +36,108 @@ class VaultAccountAdapter(
 
     override fun onBindViewHolder(holder: VaultAccountViewHolder, position: Int) {
         holder.itemView.apply {
-            tvVaultAccountName.text = vaultAccounts[position].AccountName
+            tvVaultAccountName.text = displayedVaultAccounts[position].AccountName
+            holder.itemView.setOnClickListener {  vaultAccountViewClickListener.invoke(holder, position) }
         }
     }
 
     override fun getItemCount(): Int {
-        return vaultAccounts.size
+        return displayedVaultAccounts.size
     }
 
+    fun getVaultAccounts(): Array<VaultAccount> = displayedVaultAccounts.toTypedArray()
+
     fun addVaultAccount(vaultAccount: VaultAccount): Boolean {
-        val duplicate: Boolean = vaultAccounts.any { element ->
-            element.AccountName == vaultAccount.AccountName
+        accountNameFilterString.let { filterString ->
+            clearAccountNameFilter()
+
+            val duplicate: Boolean = displayedVaultAccounts.any { element ->
+                element.AccountName == vaultAccount.AccountName
+            }
+
+            if(duplicate) {
+                return false
+            }
+
+            displayedVaultAccounts.add(vaultAccount)
+            notifyItemInserted(displayedVaultAccounts.size - 1)
+
+            setAccountNameFilter(filterString)
+            return true
         }
 
-        if(duplicate) {
-            return false
-        }
-
-        vaultAccounts.add(vaultAccount)
-        notifyItemInserted(vaultAccounts.size - 1)
-        return true
     }
 
     fun removeVaultAccount(vaultAccountIndex: Int) {
-        if(vaultAccountIndex < vaultAccounts.size) {
-            vaultAccounts.removeAt(vaultAccountIndex)
-            notifyItemRemoved(vaultAccountIndex)
-        }
-    }
+        accountNameFilterString.let { filterString ->
+            clearAccountNameFilter()
 
-    fun removeVaultAccount(vaultAccount: VaultAccount) {
-        if(vaultAccounts.contains(vaultAccount)) {
-            removeVaultAccount(vaultAccounts.indexOf(vaultAccount))
+            if(vaultAccountIndex < displayedVaultAccounts.size) {
+                displayedVaultAccounts.removeAt(vaultAccountIndex)
+                notifyItemRemoved(vaultAccountIndex)
+            }
+
+            setAccountNameFilter(filterString)
         }
     }
 
     fun clearVaultAccounts() {
-        val elementsRemoved = vaultAccounts.size
-        vaultAccounts.clear()
+        accountNameFilterString.let { filterString ->
+            clearAccountNameFilter()
 
-        notifyItemRangeRemoved(0, elementsRemoved)
+            displayedVaultAccounts.size.also {
+                displayedVaultAccounts.clear()
+                notifyItemRangeRemoved(0, it)
+            }
+
+            setAccountNameFilter(filterString)
+        }
     }
 
-    fun itemAt(index: Int): VaultAccount? {
-        if(index >= vaultAccounts.size) return null
-        return vaultAccounts[index]
+    fun setItemAt(vaultAccountIndex: Int, newVaultAccount: VaultAccount) {
+        if(vaultAccountIndex >= displayedVaultAccounts.size)
+            throw IndexOutOfBoundsException("vaultAccountIndex exceeds ${displayedVaultAccounts.size}")
+
+        displayedVaultAccounts[vaultAccountIndex] = newVaultAccount
+        notifyItemChanged(vaultAccountIndex)
     }
+
+    fun itemAt(index: Int): VaultAccount? =
+        if(index < displayedVaultAccounts.size) displayedVaultAccounts[index]  else null
 
     fun clearAccountNameFilter() {
         if(vaultAccountsFilterReference.isNotEmpty()) {
-            val elementsRemoved: Int = vaultAccounts.size
-            vaultAccounts.clear()
+            val elementsRemoved: Int = displayedVaultAccounts.size
+            displayedVaultAccounts.clear()
 
             notifyItemRangeRemoved(0, elementsRemoved)
 
-            vaultAccounts.addAll(vaultAccountsFilterReference)
-            notifyItemRangeInserted(0, vaultAccounts.size)
+            displayedVaultAccounts.addAll(vaultAccountsFilterReference)
+            notifyItemRangeInserted(0, displayedVaultAccounts.size)
 
             vaultAccountsFilterReference.clear()
+            accountNameFilterString = ""
         }
     }
 
     fun setAccountNameFilter(filterText: String) {
+        accountNameFilterString = filterText
+
         if(vaultAccountsFilterReference.isEmpty()) {
-            vaultAccountsFilterReference.addAll(vaultAccounts)
+            vaultAccountsFilterReference.addAll(displayedVaultAccounts)
         }
 
-        val elementsRemoved: Int = vaultAccounts.size
-        vaultAccounts.clear()
+        val elementsRemoved: Int = displayedVaultAccounts.size
+        displayedVaultAccounts.clear()
 
         notifyItemRangeRemoved(0, elementsRemoved)
 
         for(index in 0 until vaultAccountsFilterReference.size) {
             val vaultAccount = vaultAccountsFilterReference[index]
 
-            if(vaultAccount.AccountName.toLowerCase(Locale.ROOT).contains(filterText.toLowerCase(Locale.ROOT))) {
-                vaultAccounts.add(vaultAccount)
-                notifyItemInserted(vaultAccounts.size)
+            if(vaultAccount.AccountName.lowercase(Locale.ROOT).contains(filterText.toLowerCase(Locale.ROOT))) {
+                displayedVaultAccounts.add(vaultAccount)
+                notifyItemInserted(displayedVaultAccounts.size)
             }
         }
     }
