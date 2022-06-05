@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Krypton</string>
+    <string name="btn_add_entry_text">Add Entry</string>
+    <string name="btn_remove_entries_text">Remove Selected</string>
+    <string name="btn_select_entries_text">Select</string>
+    <string name="btn_generate_passwords_text">Generate Password(s)</string>
+    <string name="btn_edit_mode_text">Edit</string>
 
 </resources>
