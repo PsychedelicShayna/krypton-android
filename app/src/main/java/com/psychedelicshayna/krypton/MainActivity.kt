@@ -56,25 +56,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadDefaultVault() {
-//
-//        val defaultVaultFilePath: String? = sharedPreferences.getString("DefaultVaultFilePath", null)
-//
-//        if(defaultVaultFilePath.isNullOrBlank()) {
-//            Toast.makeText(this, "No default vault has been set!", Toast.LENGTH_SHORT).show()
-//        }
-//
-//        else {
-//            val defaultVaultFile = File(defaultVaultFilePath)
-//
-//            if(defaultVaultFile.exists()) {
-//                loadVaultFilePath = defaultVaultFilePath
-//                loadVault()
-//            } else {
-//                Toast.makeText(this,
-//                    "The path to the default vault file does not exist! - $defaultVaultFilePath",
-//                    Toast.LENGTH_SHORT).show()
-//            }
-//        }
+        val defaultVaultFileUri: Uri? = sharedPreferences.getString("DefaultVaultFilePath", null).let {
+            if(it != null) Uri.parse(it)
+            else {
+                Toast.makeText(this, "No default vault has been set!", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
+        loadVaultFileUri = defaultVaultFileUri
+        loadVault()
     }
 
     private fun newVault() {
