@@ -1,54 +1,65 @@
 package com.psychedelicshayna.krypton
 
-import android.app.Activity
+import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.style.TabStopSpan
-import android.util.JsonReader
-import android.util.Xml
+import android.text.Layout
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.SearchView
-import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.android.synthetic.main.activity_vault_viewer.*
-import kotlinx.android.synthetic.main.vault_credentials_prompt.*
+import kotlinx.android.synthetic.main.activity_account_viewer.*
+import kotlinx.android.synthetic.main.dialog_integrity_check_result.*
 import org.json.*
-import java.io.BufferedReader
-import java.io.File
-import java.io.InputStreamReader
-import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import java.util.Locale
 import org.apache.commons.io.IOUtils
+import org.w3c.dom.Text
+import java.io.FileInputStream
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.security.MessageDigest
 
 class VaultViewer : AppCompatActivity() {
     private lateinit var vaultAccountAdapter: VaultAccountAdapter
     private val vaultSecurity: VaultSecurity = VaultSecurity()
     private var receivedVaultFileUri: Uri? = null
+    private var vaultWasDecryptedWhenLoading: Boolean = false
+
+    private fun revertVaultChanges() {
+
+    }
+
+    private fun diffVault() {
+
+    }
+
+    private fun configureVaultSecurity() {
+
+    }
 
     private fun addAccount() {
         val promptView: View = LayoutInflater.from(this).inflate(
-            R.layout.new_account_prompt,
+            R.layout.dialog_new_account,
             null
         )
 
         val alertDialogBuilder = AlertDialog.Builder(this)
         alertDialogBuilder.setView(promptView)
 
-        val etAccountName:EditText = promptView.findViewById<EditText>(R.id.etAccountName)
+        val etAccountName: EditText = promptView.findViewById<EditText>(R.id.etAccountName)
 
         alertDialogBuilder.apply {
             setCancelable(true)
             setTitle("Enter Account Name")
 
             setPositiveButton("Add") { _, _ ->
-                val accountName:String = etAccountName.text.toString()
+                val accountName: String = etAccountName.text.toString()
 
                 if(accountName.isNotBlank()) {
                     val success = vaultAccountAdapter.addVaultAccount(VaultAccount(etAccountName.text.toString()))
@@ -64,27 +75,20 @@ class VaultViewer : AppCompatActivity() {
             }
         }
 
-        val alertDialog:AlertDialog = alertDialogBuilder.create()
+        val alertDialog: AlertDialog = alertDialogBuilder.create()
         alertDialog.show()
     }
 
-    private fun saveVault(){
-    }
-
-    private fun saveVaultAs() {
-
-    }
-
-    private fun revertVaultChanges() {
-
-    }
-
-    private fun diffVault() {
-
-    }
-
-    private fun configureVaultSecurity() {
-
+    private fun dumpVaultJson(): JSONObject {
+        return JSONObject().apply {
+            for(vaultAccount in vaultAccountAdapter.getVaultAccounts()) {
+                this.put(vaultAccount.AccountName, JSONObject().apply {
+                    for(accountEntry in vaultAccount.AccountEntries) {
+                        put(accountEntry.key, accountEntry.value)
+                    }
+                })
+            }
+        }
     }
 
     private fun loadVaultJson(vaultDataJson: JSONObject): Boolean {
@@ -110,6 +114,95 @@ class VaultViewer : AppCompatActivity() {
         }
 
         return true
+    }
+
+    private fun saveVault() {
+        val vaultFileUri: Uri = receivedVaultFileUri.let {
+            if(it != null) { it } else {
+                Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
+        val performSave = fun(vaultFileUri: Uri) {
+            val vaultData: ByteArray = dumpVaultJson().toString().toByteArray()
+            val vaultDataHash: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
+
+            contentResolver.openFileDescriptor(vaultFileUri, "w")?.let { parcelFileDescriptor ->
+                FileOutputStream(parcelFileDescriptor.fileDescriptor).use { fileOutputStream ->
+                    fileOutputStream.write(vaultData)
+                }
+            }
+
+            val vaultDataWritten: ByteArray = contentResolver.openFileDescriptor(vaultFileUri, "rw")?.let { parcelFileDescriptor ->
+                FileInputStream(parcelFileDescriptor.fileDescriptor).let { fileInputStream ->
+                    val data = fileInputStream.readBytes()
+                    fileInputStream.close()
+                    data
+                }
+            }.let {
+                if(it != null) { it } else {
+                    Toast.makeText(this, "Could not re-read the data! Something went wrong!", Toast.LENGTH_LONG).show()
+                    return
+                }
+            }
+
+            val vaultDataHashInRam: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
+            val vaultDataHashOnDisk: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultDataWritten)
+
+            val dialogIntegrityCheckResultView: View = LayoutInflater.from(this).inflate(
+                R.layout.dialog_integrity_check_result,
+                null,
+                false
+            )
+
+            val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
+            alertDialogBuilder.setView(dialogIntegrityCheckResultView)
+
+            val etIntegrityCheckRamHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckRamHash).let {
+                if(it != null) {
+                    it
+                } else {
+                    Toast.makeText(this, "Couldn't find TextView etIntegrityCheckRamHash, was null!", Toast.LENGTH_LONG).show()
+                    return
+                }
+            }
+
+            val etIntegrityCheckDiskHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckDiskHash).let {
+                if(it != null) {
+                    it
+                } else {
+                    Toast.makeText(this, "Couldn't find TextView etIntegrityCheckDiskHash, was null!", Toast.LENGTH_LONG).show()
+                    return
+                }
+            }
+
+            alertDialogBuilder.apply {
+                setView(dialogIntegrityCheckResultView)
+                etIntegrityCheckRamHash.text = vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
+                etIntegrityCheckDiskHash.text = vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
+
+                if(vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
+                    setTitle("Integrity Check Passed!")
+                    setMessage("The SHA-256 hash of the vault in RAM matches the hash of the vault on the disk.")
+
+                    etIntegrityCheckRamHash.setTextColor(Color.GREEN)
+                    etIntegrityCheckDiskHash.setTextColor(Color.GREEN)
+                } else {
+                    setTitle("Integrity Check Failed!")
+                    setMessage("The SHA-256 hash of the vault in RAM does not match the hash of the vault on the disk! The data was not stored properly. " +
+                            "The recommended action is to use Save As to save the vault to a new location instead.")
+
+                    etIntegrityCheckRamHash.setTextColor(Color.RED)
+                    etIntegrityCheckDiskHash.setTextColor(Color.RED)
+                }
+            }.create().show()
+        }
+
+    }
+
+    private fun saveVaultAs() {
+
     }
 
     private fun loadVaultFile(vaultFileUri: Uri) {
@@ -144,6 +237,8 @@ class VaultViewer : AppCompatActivity() {
                         "The JSON is valid, but a different structure was expected!", Toast.LENGTH_LONG).show()
 
                 finish()
+            } else {
+                vaultWasDecryptedWhenLoading = false
             }
 
             return
@@ -153,7 +248,7 @@ class VaultViewer : AppCompatActivity() {
         Toast.makeText(this, "Failed to parse vault, please provide parameters for decryption!", Toast.LENGTH_LONG).show()
 
         val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
-            R.layout.vault_credentials_prompt, null
+            R.layout.dialog_vault_credentials, null
         )
 
         val alertDialogBuilder = AlertDialog.Builder(this)
@@ -190,6 +285,7 @@ class VaultViewer : AppCompatActivity() {
 
             if(vaultFileDataJson != null) {
                 if(loadVaultJson(vaultFileDataJson as JSONObject)) {
+                    vaultWasDecryptedWhenLoading = true
                     alertDialog.dismiss()
                     return@setOnClickListener
                 } else {
@@ -198,6 +294,7 @@ class VaultViewer : AppCompatActivity() {
                 }
             } else {
                 Toast.makeText(this, "The provided credentials did not work!", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
             }
 
             this@VaultViewer.finish()
@@ -206,7 +303,7 @@ class VaultViewer : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_vault_viewer)
+        setContentView(R.layout.activity_account_viewer)
 
         vaultAccountAdapter = VaultAccountAdapter(mutableListOf())
         receivedVaultFileUri = Uri.parse(intent.getStringExtra("VaultFileUri"))
@@ -214,8 +311,66 @@ class VaultViewer : AppCompatActivity() {
         rvVaultAccounts.adapter = vaultAccountAdapter
         rvVaultAccounts.layoutManager = LinearLayoutManager(this)
 
+        vaultAccountAdapter.vaultAccountViewClickListener = fun(holder, index) {
+            val vaultAccountAtIndex: VaultAccount = try {
+                vaultAccountAdapter.itemAt(index)
+            } catch(exception: IndexOutOfBoundsException) {
+                null
+            }.let {
+                if(it != null) { it } else {
+                    Toast.makeText(this, "IndexOutOfBoundsException when " +
+                            "accessing clicked vault.", Toast.LENGTH_LONG).show()
+
+                    return
+                }
+            }
+
+            Intent(this, AccountEntryViewer::class.java).apply {
+                putExtra("VaultAccountObject", vaultAccountAtIndex)
+                startActivity(this)
+            }
+        }
+
         btnAddAccount.setOnClickListener    { addAccount() }
-        btnSave.setOnClickListener          { saveVault() }
+
+        btnSave.setOnClickListener {
+            if(vaultWasDecryptedWhenLoading) {
+                val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
+                    R.layout.dialog_vault_credentials, null
+                )
+
+                val alertDialogBuilder = AlertDialog.Builder(this)
+                alertDialogBuilder.setView(vaultCredentialsPromptView)
+
+                alertDialogBuilder.apply {
+                    setCancelable(true)
+                    setTitle("Retype Your Password")
+
+                    setPositiveButton("Encrypt") { _, _ -> }
+
+                    setNeutralButton("Cancel")   { _, _ ->
+                        Toast.makeText(this@VaultViewer, "Vault wasn't saved, password wasn't provided!", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                val alertDialog: AlertDialog = alertDialogBuilder.create()
+                alertDialog.show()
+
+                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                    val etPassword: EditText = vaultCredentialsPromptView.findViewById(R.id.etPassword)
+
+                    if(vaultSecurity.verifyPassword(etPassword.text.toString())) {
+                        alertDialog.dismiss()
+                        saveVault()
+                    } else {
+                        Toast.makeText(this, "The password doesn't match the password used to load the vault!", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else {
+                saveVault()
+            }
+        }
+
         btnSaveAs.setOnClickListener        { saveVaultAs() }
         btnRevertChanges.setOnClickListener { revertVaultChanges() }
         btnDiff.setOnClickListener          { diffVault() }
