@@ -1,5 +1,6 @@
 package com.psychedelicshayna.krypton
 
+import android.app.UiModeManager.MODE_NIGHT_YES
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
@@ -10,9 +11,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContentProviderCompat.requireContext
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_vault_viewer.*
+import kotlinx.android.synthetic.main.activity_account_viewer.*
 import java.io.File
 //import com.psychedelicshayna.krypton.
 
@@ -26,8 +28,9 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, resultData)
 
         if(resultCode == RESULT_OK && requestCode == loadVaultActivityResultRequestCode) {
-            if (resultData != null) {
-                loadVaultFileUri = resultData.data
+            resultData?.data?.also {
+                contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                loadVaultFileUri = it
                 loadVault()
             }
         }
@@ -43,11 +46,11 @@ class MainActivity : AppCompatActivity() {
 
             startActivityForResult(openFileIntent, loadVaultActivityResultRequestCode)
         } else {
-            val openVaultIntent = Intent(this, VaultViewer::class.java).apply {
+            Intent(this, VaultViewer::class.java).apply {
                 putExtra("VaultFileUri", loadVaultFileUri.toString())
+                startActivity(this)
             }
 
-            startActivity(openVaultIntent)
             loadVaultFileUri = null
         }
     }
@@ -82,6 +85,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 
         sharedPreferences   = getSharedPreferences("KryptonPreferences", Context.MODE_PRIVATE)
 
