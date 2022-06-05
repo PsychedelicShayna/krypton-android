@@ -88,6 +88,14 @@ class VaultAccountAdapter(
         }
     }
 
+    fun setVaultAccounts(vaultAccounts: Array<VaultAccount>) {
+        clearVaultAccounts()
+
+        vaultAccountsBackBuffer.addAll(vaultAccounts)
+        vaultAccountsFrontBuffer.addAll(vaultAccounts)
+        notifyItemRangeInserted(0, vaultAccountsFrontBuffer.size)
+    }
+
     fun getVaultAccounts(): Array<VaultAccount> = vaultAccountsBackBuffer.toTypedArray()
 
     fun addVaultAccount(vaultAccount: VaultAccount): Boolean {
