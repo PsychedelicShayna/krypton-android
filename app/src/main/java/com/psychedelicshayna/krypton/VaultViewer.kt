@@ -8,19 +8,13 @@ import android.os.Bundle
 import android.text.Layout
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.EditText
-import android.widget.SearchView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.ContentInfoCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_account_viewer.*
-import kotlinx.android.synthetic.main.dialog_integrity_check_result.*
 import org.json.*
 import java.nio.charset.StandardCharsets
 import org.apache.commons.io.IOUtils
-import org.w3c.dom.Text
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -33,7 +27,7 @@ class VaultViewer : AppCompatActivity() {
     private val vaultSecurity: VaultSecurity = VaultSecurity()
 
     private var receivedVaultFileUri: Uri? = null
-    private var vaultWasDecryptedWhenLoading: Boolean = false
+    private var vaultUsesEncryption: Boolean = false
     private val saveVaultAsActivityResultRequestCode: Int = 2
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
@@ -52,7 +46,54 @@ class VaultViewer : AppCompatActivity() {
     }
 
     private fun configureVaultSecurity() {
+        val vaultSecurityDialogView: View = LayoutInflater.from(this).inflate(
+            R.layout.dialog_vault_security,
+            null
+        )
 
+        val editTextSecurityDialogPassword: EditText =
+            vaultSecurityDialogView.findViewById(R.id.editTextDialogVaultSecurityPassword)
+
+        val editTextSecurityDialogConfirmPassword: EditText =
+            vaultSecurityDialogView.findViewById(R.id.editTextDialogVaultSecurityConfirmPassword)
+
+        val buttonSecurityDialogEnableEncryption: Button =
+            vaultSecurityDialogView.findViewById(R.id.buttonDialogVaultSecurityEnableEncryption)
+
+        val buttonSecurityDialogDisableEncryption: Button =
+            vaultSecurityDialogView.findViewById(R.id.buttonDialogVaultSecurityDisableEncryption)
+
+        val alertDialogBuilder = AlertDialog.Builder(this).apply {
+            setView(vaultSecurityDialogView)
+            setCancelable(true)
+            setTitle("Configure Vault Security")
+        }
+
+        val alertDialog: AlertDialog = alertDialogBuilder.create()
+
+        buttonSecurityDialogEnableEncryption.setOnClickListener {
+            val password: String = editTextSecurityDialogPassword.text.toString()
+            val confirmationPassword: String = editTextSecurityDialogConfirmPassword.text.toString()
+
+            if(password.isEmpty() || confirmationPassword.isEmpty()) {
+                Toast.makeText(this, "Supply a password first; populate both password fields.", Toast.LENGTH_LONG).show()
+            } else if(!password.contentEquals(confirmationPassword)) {
+                Toast.makeText(this, "The confirmation password doesn't match the original password!", Toast.LENGTH_LONG).show()
+            } else {
+                vaultSecurity.setCryptoParameters(password)
+                vaultUsesEncryption = true
+                Toast.makeText(this, "Encryption key set successfully.", Toast.LENGTH_SHORT).show()
+                alertDialog.dismiss()
+            }
+        }
+
+        buttonSecurityDialogDisableEncryption.setOnClickListener {
+            Toast.makeText(this, "Encryption has been disabled.", Toast.LENGTH_LONG).show()
+            vaultUsesEncryption = false
+            alertDialog.dismiss()
+        }
+
+        alertDialog.show()
     }
 
     private fun addAccount() {
@@ -158,7 +199,11 @@ class VaultViewer : AppCompatActivity() {
             }
         }
 
-        val vaultData: ByteArray = dumpVaultJson().toString().toByteArray()
+        val vaultData: ByteArray = dumpVaultJson().toString().toByteArray().let {
+            if(vaultUsesEncryption) vaultSecurity.encryptVault(it)
+            else it
+        }
+
         val vaultDataHash: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
 
         contentResolver.openFileDescriptor(vaultFileUri, "w")?.let { parcelFileDescriptor ->
@@ -268,7 +313,7 @@ class VaultViewer : AppCompatActivity() {
 
                 finish()
             } else {
-                vaultWasDecryptedWhenLoading = false
+                vaultUsesEncryption = false
             }
 
             return
@@ -315,7 +360,7 @@ class VaultViewer : AppCompatActivity() {
 
             if(vaultFileDataJson != null) {
                 if(loadVaultJson(vaultFileDataJson as JSONObject)) {
-                    vaultWasDecryptedWhenLoading = true
+                    vaultUsesEncryption = true
                     alertDialog.dismiss()
                     return@setOnClickListener
                 } else {
@@ -375,7 +420,7 @@ class VaultViewer : AppCompatActivity() {
                 }
             }
 
-            if(vaultWasDecryptedWhenLoading) {
+            if(vaultUsesEncryption) {
                 val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
                     R.layout.dialog_vault_credentials, null
                 )
