@@ -4,27 +4,74 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 xmlns:app="http://schemas.android.com/apk/res-auto"
 xmlns:tools="http://schemas.android.com/tools"
 android:layout_width="match_parent"
-android:layout_height="match_parent">
+android:layout_height="match_parent"
+android:layout_marginStart="8dp"
+android:layout_marginEnd="8dp"
+android:layout_marginTop="8dp"
+android:layout_marginBottom="8dp">
 
-<androidx.recyclerview.widget.RecyclerView
-    android:id="@+id/rvVaultAccounts"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="24dp"
-    app:layout_constraintBottom_toTopOf="@+id/btnAddAccount"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintHorizontal_bias="0"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@+id/svAccountSearch" />
+    <SearchView
+        android:id="@+id/svAccountSearch"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:queryHint="Account Name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/dividerRecyclerViewToSearchView"
+        android:iconifiedByDefault="false"
+    />
+
+    <View
+        android:id="@+id/dividerRecyclerViewToSearchView"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/svAccountSearch"
+        app:layout_constraintBottom_toTopOf="@id/rvVaultAccounts"
+        android:layout_marginTop="16dp"
+    />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvVaultAccounts"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dividerRecyclerViewToSearchView"
+        app:layout_constraintBottom_toTopOf="@+id/dividerControlsToRecycleView"
+    />
+
+    <View
+        android:id="@+id/dividerControlsToRecycleView"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rvVaultAccounts"
+        app:layout_constraintBottom_toTopOf="@id/btnAddAccount"
+        android:layout_marginBottom="8dp"
+    />
+
+    <Button
+        android:id="@+id/btnAddAccount"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:text="Add Account"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dividerControlsToRecycleView"
+        app:layout_constraintBottom_toTopOf="@+id/btnSave"
+    />
 
     <Button
         android:id="@+id/btnSave"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="2dp"
-        android:layout_marginBottom="8dp"
         android:text="Save"
         app:layout_constraintBottom_toTopOf="@+id/btnRevertChanges"
         app:layout_constraintEnd_toStartOf="@+id/btnSaveAs"
@@ -34,9 +81,6 @@ android:layout_height="match_parent">
         android:id="@+id/btnSaveAs"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         android:text="Save As"
         app:layout_constraintBottom_toTopOf="@+id/btnRevertChanges"
         app:layout_constraintEnd_toEndOf="parent"
@@ -45,9 +89,6 @@ android:layout_height="match_parent">
         android:id="@+id/btnRevertChanges"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         android:text="Revert Changes"
         app:layout_constraintBottom_toTopOf="@+id/btnDiff"
         app:layout_constraintEnd_toEndOf="parent"
@@ -57,9 +98,6 @@ android:layout_height="match_parent">
         android:id="@+id/btnDiff"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="2dp"
-        android:layout_marginBottom="16dp"
         android:text="Diff"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnSecurity"
@@ -69,40 +107,11 @@ android:layout_height="match_parent">
         android:id="@+id/btnSecurity"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="16dp"
         android:text="Security"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/btnDiff" />
 
-    <Button
-        android:id="@+id/btnAddAccount"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="Add Account"
-        app:layout_constraintBottom_toTopOf="@+id/btnSaveAs"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rvVaultAccounts" />
-
-
-    <SearchView
-        android:id="@+id/svAccountSearch"
-        android:layout_width="0dp"
-        android:layout_height="43dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="4dp"
-        android:queryHint="Account Name"
-        app:layout_constraintBottom_toTopOf="@+id/rvVaultAccounts"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:iconifiedByDefault="false"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,31 +4,30 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:layout_alignBottom="@id/btnNewVault"
+    tools:context=".MainActivity"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="8dp"
+    android:layout_marginTop="8dp"
+    >
 
     <Button
         android:id="@+id/btnLoadVault"
         android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="512dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
+        android:layout_height="60dp"
         android:text="Load Vault"
+
+        android:layout_marginTop="550dp"
         app:layout_constraintBottom_toTopOf="@+id/btnLoadDefaultVault"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-    />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/btnLoadDefaultVault"
         android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
+        android:layout_height="60dp"
         android:text="Load Default Vault"
         app:layout_constraintBottom_toTopOf="@id/btnNewVault"
         app:layout_constraintEnd_toEndOf="parent"
@@ -39,16 +38,12 @@
     <Button
         android:id="@+id/btnNewVault"
         android:layout_width="0dp"
-        android:layout_height="56dp"
+        android:layout_height="60dp"
         android:text="New Vault"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnLoadDefaultVault"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginTop="4dp"
     />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
