@@ -1,27 +1,31 @@
 package com.psychedelicshayna.krypton
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.InspectableProperty
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_vault_account.view.*
 import java.lang.IndexOutOfBoundsException
 import java.util.*
 
 class VaultAccountAdapter(
-    private val vaultAccounts: MutableList<VaultAccount>
+    private val vaultAccountsBackBuffer: MutableList<VaultAccount>
 ) : RecyclerView.Adapter<VaultAccountAdapter.VaultAccountViewHolder>() {
     class VaultAccountViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-    private val displayedVaultAccounts: MutableList<VaultAccount> = mutableListOf()
 
-    private val vaultAccountsFilterReference: MutableList<VaultAccount> = mutableListOf()
+    enum class NotifyWhat {
+        INSERTED, REMOVED, CHANGED
+    }
+
+    private val vaultAccountsFrontBuffer: MutableList<VaultAccount> = mutableListOf()
     private var accountNameFilterString: String = ""
 
     var vaultAccountViewClickListener: (VaultAccountViewHolder, Int) -> Unit = { _, _ -> }
 
     init {
-        displayedVaultAccounts.addAll(vaultAccounts)
+        vaultAccountsFrontBuffer.addAll(vaultAccountsBackBuffer)
+        notifyItemRangeInserted(0, vaultAccountsFrontBuffer.size)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VaultAccountViewHolder {
@@ -36,109 +40,112 @@ class VaultAccountAdapter(
 
     override fun onBindViewHolder(holder: VaultAccountViewHolder, position: Int) {
         holder.itemView.apply {
-            tvVaultAccountName.text = displayedVaultAccounts[position].AccountName
+            tvVaultAccountName.text = vaultAccountsFrontBuffer[position].AccountName
             holder.itemView.setOnClickListener {  vaultAccountViewClickListener.invoke(holder, position) }
         }
     }
 
     override fun getItemCount(): Int {
-        return displayedVaultAccounts.size
+        return vaultAccountsFrontBuffer.size
     }
 
-    fun getVaultAccounts(): Array<VaultAccount> = displayedVaultAccounts.toTypedArray()
+    private fun populateFilteredDataset() {
+        val newFrontBuffer: MutableList<VaultAccount> = mutableListOf()
 
-    fun addVaultAccount(vaultAccount: VaultAccount): Boolean {
-        accountNameFilterString.let { filterString ->
-            clearAccountNameFilter()
-
-            val duplicate: Boolean = displayedVaultAccounts.any { element ->
-                element.AccountName == vaultAccount.AccountName
+        for(element in vaultAccountsBackBuffer) {
+            if(element.AccountName.lowercase(Locale.ROOT).contains(accountNameFilterString.lowercase(Locale.ROOT))) {
+                newFrontBuffer.add(element)
             }
-
-            if(duplicate) {
-                return false
-            }
-
-            displayedVaultAccounts.add(vaultAccount)
-            notifyItemInserted(displayedVaultAccounts.size - 1)
-
-            setAccountNameFilter(filterString)
-            return true
         }
 
+        vaultAccountsFrontBuffer.size.also {
+            vaultAccountsFrontBuffer.clear()
+            notifyItemRangeRemoved(0, it)
+        }
+
+        vaultAccountsFrontBuffer.addAll(newFrontBuffer)
+        notifyItemRangeInserted(0, newFrontBuffer.size)
+    }
+
+    private fun notifyBackBufferChange(index: Int, what: NotifyWhat) {
+        if(accountNameFilterString.isNotEmpty()) return populateFilteredDataset()
+
+        when(what) {
+            NotifyWhat.INSERTED -> {
+                vaultAccountsFrontBuffer.add(index, vaultAccountsBackBuffer[index])
+                notifyItemInserted(index)
+            }
+
+            NotifyWhat.REMOVED -> {
+                vaultAccountsFrontBuffer.removeAt(index)
+                notifyItemRemoved(index)
+            }
+
+            NotifyWhat.CHANGED -> {
+                vaultAccountsFrontBuffer[index] = vaultAccountsBackBuffer[index]
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    fun getVaultAccounts(): Array<VaultAccount> = vaultAccountsBackBuffer.toTypedArray()
+
+    fun addVaultAccount(vaultAccount: VaultAccount): Boolean {
+        val duplicate: Boolean = vaultAccountsBackBuffer.any { element ->
+            element.AccountName == vaultAccount.AccountName
+        }
+
+        return if(duplicate) false else {
+            vaultAccountsBackBuffer.add(vaultAccount)
+            notifyBackBufferChange(vaultAccountsBackBuffer.size - 1, NotifyWhat.INSERTED)
+            true
+        }
     }
 
     fun removeVaultAccount(vaultAccountIndex: Int) {
-        accountNameFilterString.let { filterString ->
-            clearAccountNameFilter()
+        clearAccountNameFilter()
 
-            if(vaultAccountIndex < displayedVaultAccounts.size) {
-                displayedVaultAccounts.removeAt(vaultAccountIndex)
-                notifyItemRemoved(vaultAccountIndex)
-            }
-
-            setAccountNameFilter(filterString)
+        if(vaultAccountIndex < vaultAccountsBackBuffer.size) {
+            vaultAccountsBackBuffer.removeAt(vaultAccountIndex)
         }
+
+        notifyBackBufferChange(vaultAccountIndex, NotifyWhat.REMOVED)
     }
 
     fun clearVaultAccounts() {
-        accountNameFilterString.let { filterString ->
-            clearAccountNameFilter()
+        vaultAccountsBackBuffer.clear()
 
-            displayedVaultAccounts.size.also {
-                displayedVaultAccounts.clear()
-                notifyItemRangeRemoved(0, it)
-            }
-
-            setAccountNameFilter(filterString)
+        vaultAccountsFrontBuffer.size.also {
+            vaultAccountsFrontBuffer.clear()
+            notifyItemRangeRemoved(0, it)
         }
     }
 
     fun setItemAt(vaultAccountIndex: Int, newVaultAccount: VaultAccount) {
-        if(vaultAccountIndex >= displayedVaultAccounts.size)
-            throw IndexOutOfBoundsException("vaultAccountIndex exceeds ${displayedVaultAccounts.size}")
+        if(vaultAccountIndex >= vaultAccountsBackBuffer.size)
+            throw IndexOutOfBoundsException("vaultAccountIndex exceeds ${vaultAccountsBackBuffer.size}")
 
-        displayedVaultAccounts[vaultAccountIndex] = newVaultAccount
-        notifyItemChanged(vaultAccountIndex)
+        vaultAccountsBackBuffer[vaultAccountIndex] = newVaultAccount
+        notifyBackBufferChange(vaultAccountIndex, NotifyWhat.CHANGED)
     }
 
     fun itemAt(index: Int): VaultAccount? =
-        if(index < displayedVaultAccounts.size) displayedVaultAccounts[index]  else null
+        if(index < vaultAccountsBackBuffer.size) vaultAccountsBackBuffer[index] else null
 
     fun clearAccountNameFilter() {
-        if(vaultAccountsFilterReference.isNotEmpty()) {
-            val elementsRemoved: Int = displayedVaultAccounts.size
-            displayedVaultAccounts.clear()
+        accountNameFilterString = ""
 
-            notifyItemRangeRemoved(0, elementsRemoved)
-
-            displayedVaultAccounts.addAll(vaultAccountsFilterReference)
-            notifyItemRangeInserted(0, displayedVaultAccounts.size)
-
-            vaultAccountsFilterReference.clear()
-            accountNameFilterString = ""
+        vaultAccountsFrontBuffer.size.also {
+            vaultAccountsFrontBuffer.clear()
+            notifyItemRangeRemoved(0, it)
         }
+
+        vaultAccountsFrontBuffer.addAll(vaultAccountsBackBuffer)
+        notifyItemRangeInserted(0, vaultAccountsFrontBuffer.size)
     }
 
     fun setAccountNameFilter(filterText: String) {
         accountNameFilterString = filterText
-
-        if(vaultAccountsFilterReference.isEmpty()) {
-            vaultAccountsFilterReference.addAll(displayedVaultAccounts)
-        }
-
-        val elementsRemoved: Int = displayedVaultAccounts.size
-        displayedVaultAccounts.clear()
-
-        notifyItemRangeRemoved(0, elementsRemoved)
-
-        for(index in 0 until vaultAccountsFilterReference.size) {
-            val vaultAccount = vaultAccountsFilterReference[index]
-
-            if(vaultAccount.AccountName.lowercase(Locale.ROOT).contains(filterText.toLowerCase(Locale.ROOT))) {
-                displayedVaultAccounts.add(vaultAccount)
-                notifyItemInserted(displayedVaultAccounts.size)
-            }
-        }
+        populateFilteredDataset()
     }
 }
