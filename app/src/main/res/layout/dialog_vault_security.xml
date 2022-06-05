@@ -10,12 +10,20 @@
     android:paddingTop="8dp">
 
     <EditText
-        android:id="@+id/etDialogVaultSecurityPassword"
+        android:id="@+id/editTextDialogVaultSecurityPassword"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:inputType="textPassword"
         android:autofillHints="password"
         android:hint="Password"/>
+
+    <EditText
+        android:id="@+id/editTextDialogVaultSecurityConfirmPassword"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:inputType="textPassword"
+        android:autofillHints="password"
+        android:hint="Confirm Password"/>
 
     <Button
         android:id="@+id/buttonDialogVaultSecurityEnableEncryption"
