@@ -116,89 +116,86 @@ class VaultViewer : AppCompatActivity() {
         return true
     }
 
-    private fun saveVault() {
-        val vaultFileUri: Uri = receivedVaultFileUri.let {
+    private fun saveVault(uri: Uri? = null) {
+        val vaultFileUri: Uri = uri ?: receivedVaultFileUri.let {
             if(it != null) { it } else {
                 Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
                 return
             }
         }
 
-        val performSave = fun(vaultFileUri: Uri) {
-            val vaultData: ByteArray = dumpVaultJson().toString().toByteArray()
-            val vaultDataHash: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
+        val vaultData: ByteArray = dumpVaultJson().toString().toByteArray()
+        val vaultDataHash: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
 
-            contentResolver.openFileDescriptor(vaultFileUri, "w")?.let { parcelFileDescriptor ->
-                FileOutputStream(parcelFileDescriptor.fileDescriptor).use { fileOutputStream ->
-                    fileOutputStream.write(vaultData)
-                }
+        contentResolver.openFileDescriptor(vaultFileUri, "w")?.let { parcelFileDescriptor ->
+            FileOutputStream(parcelFileDescriptor.fileDescriptor).use { fileOutputStream ->
+                fileOutputStream.write(vaultData)
             }
-
-            val vaultDataWritten: ByteArray = contentResolver.openFileDescriptor(vaultFileUri, "rw")?.let { parcelFileDescriptor ->
-                FileInputStream(parcelFileDescriptor.fileDescriptor).let { fileInputStream ->
-                    val data = fileInputStream.readBytes()
-                    fileInputStream.close()
-                    data
-                }
-            }.let {
-                if(it != null) { it } else {
-                    Toast.makeText(this, "Could not re-read the data! Something went wrong!", Toast.LENGTH_LONG).show()
-                    return
-                }
-            }
-
-            val vaultDataHashInRam: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
-            val vaultDataHashOnDisk: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultDataWritten)
-
-            val dialogIntegrityCheckResultView: View = LayoutInflater.from(this).inflate(
-                R.layout.dialog_integrity_check_result,
-                null,
-                false
-            )
-
-            val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
-            alertDialogBuilder.setView(dialogIntegrityCheckResultView)
-
-            val etIntegrityCheckRamHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckRamHash).let {
-                if(it != null) {
-                    it
-                } else {
-                    Toast.makeText(this, "Couldn't find TextView etIntegrityCheckRamHash, was null!", Toast.LENGTH_LONG).show()
-                    return
-                }
-            }
-
-            val etIntegrityCheckDiskHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckDiskHash).let {
-                if(it != null) {
-                    it
-                } else {
-                    Toast.makeText(this, "Couldn't find TextView etIntegrityCheckDiskHash, was null!", Toast.LENGTH_LONG).show()
-                    return
-                }
-            }
-
-            alertDialogBuilder.apply {
-                setView(dialogIntegrityCheckResultView)
-                etIntegrityCheckRamHash.text = vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
-                etIntegrityCheckDiskHash.text = vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
-
-                if(vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
-                    setTitle("Integrity Check Passed!")
-                    setMessage("The SHA-256 hash of the vault in RAM matches the hash of the vault on the disk.")
-
-                    etIntegrityCheckRamHash.setTextColor(Color.GREEN)
-                    etIntegrityCheckDiskHash.setTextColor(Color.GREEN)
-                } else {
-                    setTitle("Integrity Check Failed!")
-                    setMessage("The SHA-256 hash of the vault in RAM does not match the hash of the vault on the disk! The data was not stored properly. " +
-                            "The recommended action is to use Save As to save the vault to a new location instead.")
-
-                    etIntegrityCheckRamHash.setTextColor(Color.RED)
-                    etIntegrityCheckDiskHash.setTextColor(Color.RED)
-                }
-            }.create().show()
         }
 
+        val vaultDataWritten: ByteArray = contentResolver.openFileDescriptor(vaultFileUri, "rw")?.let { parcelFileDescriptor ->
+            FileInputStream(parcelFileDescriptor.fileDescriptor).let { fileInputStream ->
+                val data = fileInputStream.readBytes()
+                fileInputStream.close()
+                data
+            }
+        }.let {
+            if(it != null) { it } else {
+                Toast.makeText(this, "Could not re-read the data! Something went wrong!", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
+        val vaultDataHashInRam: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
+        val vaultDataHashOnDisk: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultDataWritten)
+
+        val dialogIntegrityCheckResultView: View = LayoutInflater.from(this).inflate(
+            R.layout.dialog_integrity_check_result,
+            null,
+            false
+        )
+
+        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
+        alertDialogBuilder.setView(dialogIntegrityCheckResultView)
+
+        val etIntegrityCheckRamHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckRamHash).let {
+            if(it != null) {
+                it
+            } else {
+                Toast.makeText(this, "Couldn't find TextView etIntegrityCheckRamHash, was null!", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
+        val etIntegrityCheckDiskHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckDiskHash).let {
+            if(it != null) {
+                it
+            } else {
+                Toast.makeText(this, "Couldn't find TextView etIntegrityCheckDiskHash, was null!", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
+        alertDialogBuilder.apply {
+            setView(dialogIntegrityCheckResultView)
+            etIntegrityCheckRamHash.text = vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
+            etIntegrityCheckDiskHash.text = vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
+
+            if(vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
+                setTitle("Integrity Check Passed!")
+                setMessage("The SHA-256 hash of the vault in RAM matches the hash of the vault on the disk.")
+
+                etIntegrityCheckRamHash.setTextColor(Color.GREEN)
+                etIntegrityCheckDiskHash.setTextColor(Color.GREEN)
+            } else {
+                setTitle("Integrity Check Failed!")
+                setMessage("The SHA-256 hash of the vault in RAM does not match the hash of the vault on the disk! The data was not stored properly. " +
+                        "The recommended action is to use Save As to save the vault to a new location instead.")
+
+                etIntegrityCheckRamHash.setTextColor(Color.RED)
+                etIntegrityCheckDiskHash.setTextColor(Color.RED)
+            }
+        }.create().show()
     }
 
     private fun saveVaultAs() {
@@ -306,7 +303,11 @@ class VaultViewer : AppCompatActivity() {
         setContentView(R.layout.activity_account_viewer)
 
         vaultAccountAdapter = VaultAccountAdapter(mutableListOf())
-        receivedVaultFileUri = Uri.parse(intent.getStringExtra("VaultFileUri"))
+
+        receivedVaultFileUri = intent.getStringExtra("VaultFileUri").let {
+            if(it != null) Uri.parse(it)
+            else null
+        }
 
         rvVaultAccounts.adapter = vaultAccountAdapter
         rvVaultAccounts.layoutManager = LinearLayoutManager(this)
@@ -334,6 +335,13 @@ class VaultViewer : AppCompatActivity() {
         btnAddAccount.setOnClickListener    { addAccount() }
 
         btnSave.setOnClickListener {
+            receivedVaultFileUri.let {
+                if(it != null) { it } else {
+                    Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+            }
+
             if(vaultWasDecryptedWhenLoading) {
                 val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
                     R.layout.dialog_vault_credentials, null
