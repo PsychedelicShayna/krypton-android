@@ -137,7 +137,10 @@ class VaultAccountAdapter(
         notifyBackBufferChange(vaultAccountIndex, NotifyWhat.CHANGED)
     }
 
-    fun itemAt(index: Int): VaultAccount? =
+    fun itemAtFrontBuffer(index: Int): VaultAccount? =
+        if(index < vaultAccountsFrontBuffer.size) vaultAccountsFrontBuffer[index] else null
+
+    fun itemAtBackBuffer(index: Int): VaultAccount? =
         if(index < vaultAccountsBackBuffer.size) vaultAccountsBackBuffer[index] else null
 
     fun clearAccountNameFilter() {
