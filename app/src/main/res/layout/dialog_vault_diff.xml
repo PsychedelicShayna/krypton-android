@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp"
+    android:paddingTop="8dp">
+
+    <TextView
+        android:id="@+id/dialogVaultDiffTextViewEntriesAddedTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textSize="21dp"
+        android:text="Entries Added"
+        android:textAlignment="center"/>
+
+    <View
+        android:id="@+id/dialogVaultDiffDivider1"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider" />
+
+    <TextView
+        android:id="@+id/dialogVaultDiffTextViewEntriesAdded"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textColor="#4CAF50"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/dialogVaultDiffTextViewEntriesRemovedTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textSize="21sp"
+        android:text="Entries Removed"
+        android:textAlignment="center"/>
+
+    <View
+        android:id="@+id/dialogVaultDiffDivider2"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="8dp"
+        android:background="?android:attr/listDivider" />
+
+    <TextView
+        android:id="@+id/dialogVaultDiffTextViewEntriesRemoved"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textColor="#F44336"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/dialogVaultDiffTextViewEntriesChangedTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textSize="21sp"
+        android:text="Entries Changed"
+        android:textAlignment="center"/>
+
+    <View
+        android:id="@+id/dialogVaultDiffDivider3"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider" />
+
+    <TextView
+        android:id="@+id/dialogVaultDiffTextViewEntriesChanged"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textColor="#FFEB3B"
+        android:textSize="18sp" />
+
+</LinearLayout>
