@@ -18,7 +18,9 @@ import org.apache.commons.io.IOUtils
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.lang.Exception
 import java.security.MessageDigest
+import javax.crypto.IllegalBlockSizeException
 
 class VaultViewer : AppCompatActivity() {
     private lateinit var vaultAccountAdapter: VaultAccountAdapter
@@ -278,9 +280,32 @@ class VaultViewer : AppCompatActivity() {
             }
         }
 
-        val vaultData: ByteArray = dumpVaultJson().toString().toByteArray().let {
-            if(vaultUsesEncryption) vaultSecurity.encryptVault(it)
-            else it
+        val vaultData: ByteArray = try {
+            dumpVaultJson()
+        } catch(exception: Exception) {
+            Toast.makeText(this, "Cannot save vault! Exception occurred during JSON serialization; " +
+                    "the source data was probably invalid in some way.", Toast.LENGTH_LONG).show()
+            return
+        }.let { // Attempt to turn the JSONObject into a string.
+            try {
+                toString()
+            } catch(exception: Exception) {
+                Toast.makeText(this, "Cannot save vault! Exception occurred when attempting to turn " +
+                        "the JSONObject into a string.", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }.toByteArray().let { // Attempt to encrypt the string's bytes if vault encryption is enabled.
+            if (vaultUsesEncryption) {
+                try {
+                    vaultSecurity.encryptVault(it)
+                } catch (exception: Exception) {
+                    Toast.makeText(this, "Cannot save vault! Exception occurred during encryption. " +
+                            "If the data is important, maybe try without encryption?", Toast.LENGTH_LONG).show()
+                    return
+                }
+            } else {
+                it
+            }
         }
 
         val vaultDataHash: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
@@ -399,7 +424,7 @@ class VaultViewer : AppCompatActivity() {
         }
 
         // If that doesn't work, attempt to decrypt it as if it were AES encrypted.
-        Toast.makeText(this, "Failed to parse vault, please provide parameters for decryption!", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "Assuming the vault is encrypted.", Toast.LENGTH_LONG).show()
 
         val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_vault_credentials, null
@@ -432,7 +457,7 @@ class VaultViewer : AppCompatActivity() {
 
             vaultFileDataJson = try {
                 JSONObject(String(vaultSecurity.decryptVault(vaultFileDataBytes)))
-            } catch(exception: JSONException) {
+            } catch(exception: Exception) {
                 null
             }
 
@@ -442,11 +467,11 @@ class VaultViewer : AppCompatActivity() {
                     alertDialog.dismiss()
                     return@setOnClickListener
                 } else {
-                    Toast.makeText(this, "There was a problem with the JSON structure! " +
-                            "The JSON is valid, but a different structure was expected!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "There was a problem with the JSON structure! Decryption worked and " +
+                            "the JSON is valid, but a different structure was expected!", Toast.LENGTH_LONG).show()
                 }
             } else {
-                Toast.makeText(this, "The provided credentials did not work!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Decryption failed!", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
@@ -470,7 +495,7 @@ class VaultViewer : AppCompatActivity() {
 
         vaultAccountAdapter.vaultAccountViewClickListener = fun(holder, index) {
             val vaultAccountAtIndex: VaultAccount = try {
-                vaultAccountAdapter.itemAt(index)
+               vaultAccountAdapter.itemAtFrontBuffer(index)
             } catch(exception: IndexOutOfBoundsException) {
                 null
             }.let {
