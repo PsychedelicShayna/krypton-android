@@ -42,7 +42,86 @@ class VaultViewer : AppCompatActivity() {
     }
 
     private fun diffVault() {
+        val vaultDiffDialogView: View = LayoutInflater.from(this).inflate(
+            R.layout.dialog_vault_diff,
+            null
+        )
 
+        val dialogVaultDiffTextViewEntriesAdded: TextView =
+            vaultDiffDialogView.findViewById(R.id.dialogVaultDiffTextViewEntriesAdded)
+
+        val dialogVaultDiffTextViewEntriesRemoved: TextView =
+            vaultDiffDialogView.findViewById(R.id.dialogVaultDiffTextViewEntriesRemoved)
+
+        val dialogVaultDiffTextViewEntriesChanged: TextView =
+            vaultDiffDialogView.findViewById(R.id.dialogVaultDiffTextViewEntriesChanged)
+
+        val alertDialogBuilder = AlertDialog.Builder(this).apply {
+            setView(vaultDiffDialogView)
+            setCancelable(true)
+        }
+
+        val entriesAdded: MutableList<String> = mutableListOf()
+        val entriesRemoved: MutableList<String> = mutableListOf()
+        val entriesChanged: MutableList<String> = mutableListOf()
+
+        val alertDialog: AlertDialog = alertDialogBuilder.create()
+
+        val newVaultAccounts: Array<VaultAccount> = vaultAccountAdapter.getVaultAccounts()
+        val oldVaultAccounts: Array<VaultAccount> = backupOfVaultAccounts.toTypedArray()
+
+        for (newAccount: VaultAccount in newVaultAccounts) {
+            val oldAccount: VaultAccount? = oldVaultAccounts.find { vaultAccount ->
+                vaultAccount.contentEquals(newAccount)
+            }
+
+            if(oldAccount == null) {
+                entriesAdded.add("+ %s".format(newAccount.AccountName))
+
+                for(entry: Map.Entry<String, String> in newAccount.AccountEntries) {
+                    entriesAdded.add("+ %s/%s".format(newAccount.AccountName, entry.key))
+                }
+            } else {
+                for(entry: Map.Entry<String, String> in newAccount.AccountEntries) {
+                    if(!oldAccount.AccountEntries.containsKey(entry.key)) {
+                        entriesAdded.add("+ %s/%s".format(newAccount.AccountName, entry.key))
+                    } else if(oldAccount.AccountEntries[entry.key] != entry.value) {
+                        entriesChanged.add("~ %s/%s".format(newAccount.AccountName, entry.key))
+                    }
+                }
+            }
+        }
+
+        for (oldAccount: VaultAccount in oldVaultAccounts) {
+            val newAccount: VaultAccount? = newVaultAccounts.find { vaultAccount ->
+                vaultAccount.contentEquals(oldAccount)
+            }
+
+            if(newAccount == null) {
+                entriesRemoved.add("- %s".format(oldAccount.AccountName))
+
+                for(entry: Map.Entry<String, String> in oldAccount.AccountEntries) {
+                    entriesRemoved.add("- %s/%s".format(oldAccount.AccountName, entry.key))
+                }
+            } else {
+                for(entry: Map.Entry<String, String> in oldAccount.AccountEntries) {
+                    if(!newAccount.AccountEntries.containsKey(entry.key)) {
+                        entriesRemoved.add("- %s/%s".format(oldAccount.AccountName, entry.key))
+                    }
+                }
+            }
+        }
+
+        if(entriesAdded.isNotEmpty())
+            dialogVaultDiffTextViewEntriesAdded.text = entriesAdded.joinToString("\n")
+
+        if(entriesRemoved.isNotEmpty())
+            dialogVaultDiffTextViewEntriesRemoved.text = entriesRemoved.joinToString("\n")
+
+        if(entriesChanged.isNotEmpty())
+            dialogVaultDiffTextViewEntriesChanged.text = entriesChanged.joinToString("\n")
+
+        alertDialog.show()
     }
 
     private fun configureVaultSecurity() {
@@ -330,7 +409,6 @@ class VaultViewer : AppCompatActivity() {
         alertDialogBuilder.setView(vaultCredentialsPromptView)
 
         alertDialogBuilder.apply {
-            setCancelable(true)
             setTitle("Provide Decryption Parameters")
             setPositiveButton("Decrypt") { _, _ -> }
             setNeutralButton("Cancel")   { _, _ -> this@VaultViewer.finish() }
