@@ -7,15 +7,16 @@
     android:paddingStart="8dp"
     android:paddingEnd="8dp"
     android:paddingBottom="8dp"
-    android:paddingTop="8dp">
+    android:paddingTop="24dp">
 
     <TextView
         android:id="@+id/dialogVaultDiffTextViewEntriesAddedTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
         android:textSize="21dp"
-        android:text="Entries Added"
+        android:text="Added"
         android:textAlignment="center"/>
 
     <View
@@ -28,7 +29,7 @@
         android:id="@+id/dialogVaultDiffTextViewEntriesAdded"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="24dp"
         android:textColor="#4CAF50"
         android:textSize="18sp" />
 
@@ -38,7 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:textSize="21sp"
-        android:text="Entries Removed"
+        android:text="Removed"
         android:textAlignment="center"/>
 
     <View
@@ -52,7 +53,7 @@
         android:id="@+id/dialogVaultDiffTextViewEntriesRemoved"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="24dp"
         android:textColor="#F44336"
         android:textSize="18sp" />
 
@@ -62,7 +63,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:textSize="21sp"
-        android:text="Entries Changed"
+        android:text="Changed"
         android:textAlignment="center"/>
 
     <View
@@ -75,7 +76,7 @@
         android:id="@+id/dialogVaultDiffTextViewEntriesChanged"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="24dp"
         android:textColor="#FFEB3B"
         android:textSize="18sp" />
 
