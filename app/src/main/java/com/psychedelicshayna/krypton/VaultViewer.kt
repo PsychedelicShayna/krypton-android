@@ -285,14 +285,16 @@ class VaultViewer : AppCompatActivity() {
         } catch(exception: Exception) {
             Toast.makeText(this, "Cannot save vault! Exception occurred during JSON serialization; " +
                     "the source data was probably invalid in some way.", Toast.LENGTH_LONG).show()
+
             return
         }.let { // Attempt to turn the JSONObject into a string.
             try {
-                toString()
+                it.toString()
             } catch(exception: Exception) {
                 Toast.makeText(this, "Cannot save vault! Exception occurred when attempting to turn " +
                         "the JSONObject into a string.", Toast.LENGTH_SHORT).show()
-                return
+
+                return@saveVaultAs
             }
         }.toByteArray().let { // Attempt to encrypt the string's bytes if vault encryption is enabled.
             if (vaultUsesEncryption) {
@@ -301,7 +303,8 @@ class VaultViewer : AppCompatActivity() {
                 } catch (exception: Exception) {
                     Toast.makeText(this, "Cannot save vault! Exception occurred during encryption. " +
                             "If the data is important, maybe try without encryption?", Toast.LENGTH_LONG).show()
-                    return
+
+                    return@saveVaultAs
                 }
             } else {
                 it
@@ -434,6 +437,7 @@ class VaultViewer : AppCompatActivity() {
         alertDialogBuilder.setView(vaultCredentialsPromptView)
 
         alertDialogBuilder.apply {
+            setCancelable(false)
             setTitle("Provide Decryption Parameters")
             setPositiveButton("Decrypt") { _, _ -> }
             setNeutralButton("Cancel")   { _, _ -> this@VaultViewer.finish() }
