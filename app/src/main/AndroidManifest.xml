@@ -11,7 +11,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".AccountEntryViewer"
+            android:name=".EntryViewer"
             android:exported="false"/>
 
         <activity android:name=".VaultViewer"/>
