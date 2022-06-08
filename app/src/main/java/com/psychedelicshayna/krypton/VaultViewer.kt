@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.Layout
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
@@ -20,7 +19,6 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.lang.Exception
 import java.security.MessageDigest
-import javax.crypto.IllegalBlockSizeException
 
 class VaultViewer : AppCompatActivity() {
     private lateinit var vaultAccountAdapter: VaultAccountAdapter
@@ -178,38 +176,45 @@ class VaultViewer : AppCompatActivity() {
     }
 
     private fun addAccount() {
-        val promptView: View = LayoutInflater.from(this).inflate(
+        val dialogNewAccountView: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_new_account,
             null
         )
 
-        val alertDialogBuilder = AlertDialog.Builder(this)
-        alertDialogBuilder.setView(promptView)
+        val dialogNewAccountButtonAddAccount: Button =
+            dialogNewAccountView.findViewById(R.id.btnAddAccount)
 
-        val etAccountName: EditText = promptView.findViewById<EditText>(R.id.etAccountName)
+        val alertDialogBuilder = AlertDialog.Builder(this).apply {
+            setView(dialogNewAccountView)
+        }
+
+        val etAccountName: EditText =
+            dialogNewAccountView.findViewById<EditText>(R.id.etAccountName)
 
         alertDialogBuilder.apply {
             setCancelable(true)
             setTitle("Enter Account Name")
 
-            setPositiveButton("Add") { _, _ ->
-                val accountName: String = etAccountName.text.toString()
-
-                if(accountName.isNotBlank()) {
-                    val success = vaultAccountAdapter.addVaultAccount(VaultAccount(etAccountName.text.toString()))
-
-                    if(!success) {
-                        Toast.makeText(this.context, "An account with that name already exists!", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-
-            setNeutralButton("Cancel") { _, _ ->
-
-            }
+            setPositiveButton("Add")   { _, _ -> }
+            setNeutralButton("Cancel") { _, _ -> }
         }
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
+
+        dialogNewAccountButtonAddAccount.setOnClickListener {
+            val accountName: String = etAccountName.text.toString()
+
+            if(accountName.isNotBlank()) {
+                val success = vaultAccountAdapter.addVaultAccount(VaultAccount(etAccountName.text.toString()))
+
+                if(!success) {
+                    Toast.makeText(this, "An account with that name already exists!", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Enter an account name first. Name cannot be blank.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         alertDialog.show()
     }
 
@@ -511,7 +516,7 @@ class VaultViewer : AppCompatActivity() {
                 }
             }
 
-            Intent(this, AccountEntryViewer::class.java).apply {
+            Intent(this, EntryViewer::class.java).apply {
                 putExtra("VaultAccountObject", vaultAccountAtIndex)
                 startActivity(this)
             }

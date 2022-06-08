@@ -5,11 +5,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_account_entry.view.*
-import java.util.*
 
-class AccountEntryAdapter(
+class EntryAdapter(
     private val accountEntriesMap: Map<String, String>
-) : RecyclerView.Adapter<AccountEntryAdapter.VaultEntryViewHolder>() {
+) : RecyclerView.Adapter<EntryAdapter.VaultEntryViewHolder>() {
     class VaultEntryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     private val accountEntryPairs: MutableList<Pair<String, String>> =
@@ -29,7 +28,7 @@ class AccountEntryAdapter(
         )
     }
 
-    override fun onBindViewHolder(holder: AccountEntryAdapter.VaultEntryViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: EntryAdapter.VaultEntryViewHolder, position: Int) {
         holder.itemView.apply {
             tvAccountEntryName.text = accountEntryPairs[position].first
             tvAccountEntryValue.text = accountEntryPairs[position].second

@@ -6,8 +6,8 @@ import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_entry_viewer.*
 
-class AccountEntryViewer : AppCompatActivity() {
-    private lateinit var accountEntryAdapter: AccountEntryAdapter
+class EntryViewer : AppCompatActivity() {
+    private lateinit var entryAdapter: EntryAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,11 +21,15 @@ class AccountEntryViewer : AppCompatActivity() {
             }
         }
 
-        tvOpenedVaultAccountName.text = vaultAccount.AccountName
+        activityEntryViewerTextViewAccountName.text = vaultAccount.AccountName
 
-        accountEntryAdapter = AccountEntryAdapter(vaultAccount.AccountEntries)
+        entryAdapter = EntryAdapter(vaultAccount.AccountEntries)
 
-        rvEntries.adapter = accountEntryAdapter
-        rvEntries.layoutManager = LinearLayoutManager(this)
+        activityEntryViewerRecyclerViewEntries.adapter = entryAdapter
+        activityEntryViewerRecyclerViewEntries.layoutManager = LinearLayoutManager(this)
+    }
+
+    fun addEntry() {
+
     }
 }
