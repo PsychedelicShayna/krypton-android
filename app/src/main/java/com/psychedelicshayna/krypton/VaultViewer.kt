@@ -181,27 +181,22 @@ class VaultViewer : AppCompatActivity() {
             null
         )
 
-        val dialogNewAccountButtonAddAccount: Button =
-            dialogNewAccountView.findViewById(R.id.btnAddAccount)
+        val etAccountName: EditText =
+            dialogNewAccountView.findViewById<EditText>(R.id.dialogNewAccountEditTextAccountName)
 
         val alertDialogBuilder = AlertDialog.Builder(this).apply {
             setView(dialogNewAccountView)
-        }
-
-        val etAccountName: EditText =
-            dialogNewAccountView.findViewById<EditText>(R.id.etAccountName)
-
-        alertDialogBuilder.apply {
             setCancelable(true)
-            setTitle("Enter Account Name")
+            setTitle("Specify Account Name")
 
-            setPositiveButton("Add")   { _, _ -> }
             setNeutralButton("Cancel") { _, _ -> }
+            setPositiveButton("Add")   { _, _ -> }
         }
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
+        alertDialog.show()
 
-        dialogNewAccountButtonAddAccount.setOnClickListener {
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val accountName: String = etAccountName.text.toString()
 
             if(accountName.isNotBlank()) {
@@ -214,8 +209,6 @@ class VaultViewer : AppCompatActivity() {
                 Toast.makeText(this, "Enter an account name first. Name cannot be blank.", Toast.LENGTH_SHORT).show()
             }
         }
-
-        alertDialog.show()
     }
 
     private fun dumpVaultJson(): JSONObject {
