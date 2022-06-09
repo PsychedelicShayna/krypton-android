@@ -159,4 +159,7 @@ class VaultAccountAdapter(
         accountNameFilterString = filterText
         populateFilteredDataset()
     }
+
+    fun hasAccountWithName(accountName: String): Boolean =
+        vaultAccountsBackBuffer.any { vaultAccount -> vaultAccount.AccountName.contentEquals(accountName) }
 }
