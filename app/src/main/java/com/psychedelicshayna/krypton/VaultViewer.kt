@@ -199,15 +199,18 @@ class VaultViewer : AppCompatActivity() {
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val accountName: String = etAccountName.text.toString()
 
-            if(accountName.isNotBlank()) {
-                val success = vaultAccountAdapter.addVaultAccount(VaultAccount(etAccountName.text.toString()))
-
-                if(!success) {
-                    Toast.makeText(this, "An account with that name already exists!", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(this, "Enter an account name first. Name cannot be blank.", Toast.LENGTH_SHORT).show()
+            if(accountName.isBlank()) {
+                Toast.makeText(this, "Enter an account name first. Name cannot be blank.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
             }
+
+            if(vaultAccountAdapter.hasAccountWithName(accountName)) {
+                Toast.makeText(this, "An account with that name already exists!", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            vaultAccountAdapter.addVaultAccount(VaultAccount(accountName))
+            alertDialog.dismiss()
         }
     }
 
