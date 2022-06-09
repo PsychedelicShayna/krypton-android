@@ -39,13 +39,11 @@ class EntryAdapter(
         return accountEntryPairs.size
     }
 
-    fun hasEntryWithName(entryName: String): Boolean {
-        return accountEntryPairs.find { kvPair -> kvPair.first == entryName } != null
-    }
+    fun hasEntryWithName(entryName: String): Boolean =
+        accountEntryPairs.any { kvPair -> kvPair.first.contentEquals(entryName) }
 
-    fun hasEntryWithValue(entryValue: String): Boolean {
-        return accountEntryPairs.find { kvPair -> kvPair.second == entryValue } != null
-    }
+    fun hasEntryWithValue(entryValue: String): Boolean =
+        accountEntryPairs.any { kvPair -> kvPair.second.contentEquals(entryValue) }
 
     fun addAccountEntry(entryName: String, entryValue: String) {
         accountEntryPairs.add(Pair(entryName, entryValue))
