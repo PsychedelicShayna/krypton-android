@@ -1,6 +1,5 @@
 package com.psychedelicshayna.krypton
 
-import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,45 +10,70 @@ import java.util.*
 
 class VaultAccountAdapter(
     private val vaultAccountsBackBuffer: MutableList<VaultAccount>
-) : RecyclerView.Adapter<VaultAccountAdapter.VaultAccountViewHolder>() {
-    class VaultAccountViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+) : RecyclerView.Adapter<VaultAccountAdapter.AccountItemViewHolder>() {
+    class AccountItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
-    enum class NotifyWhat {
-        INSERTED, REMOVED, CHANGED
+    open class VaultAccountAdapterListener {
+        open fun onCreateViewHolderListener(parent: ViewGroup, viewType: Int) = Unit
+        open fun onBindViewHolderListener(holder: AccountItemViewHolder, position: Int) = Unit
     }
+
+    var vaultAccountAdapterListener: VaultAccountAdapterListener = VaultAccountAdapterListener()
+
+    enum class BackBufferChangeType { INSERTED, REMOVED, CHANGED }
 
     private val vaultAccountsFrontBuffer: MutableList<VaultAccount> = mutableListOf()
     private var accountNameFilterString: String = ""
-
-    var vaultAccountViewClickListener: (VaultAccountViewHolder, Int) -> Unit = { _, _ -> }
 
     init {
         vaultAccountsFrontBuffer.addAll(vaultAccountsBackBuffer)
         notifyItemRangeInserted(0, vaultAccountsFrontBuffer.size)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VaultAccountViewHolder {
-        return VaultAccountViewHolder(
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AccountItemViewHolder {
+        return AccountItemViewHolder(
             LayoutInflater.from(parent.context).inflate(
                 R.layout.item_vault_account,
                 parent,
                 false
             )
-        )
-    }
-
-    override fun onBindViewHolder(holder: VaultAccountViewHolder, position: Int) {
-        holder.itemView.apply {
-            tvVaultAccountName.text = vaultAccountsFrontBuffer[position].AccountName
-            holder.itemView.setOnClickListener {  vaultAccountViewClickListener.invoke(holder, position) }
+        ).also {
+            vaultAccountAdapterListener.onCreateViewHolderListener(parent, viewType)
         }
     }
 
-    override fun getItemCount(): Int {
-        return vaultAccountsFrontBuffer.size
+    override fun onBindViewHolder(holder: AccountItemViewHolder, position: Int) {
+        holder.itemView.apply {
+            tvVaultAccountName.text = vaultAccountsFrontBuffer[position].AccountName
+            vaultAccountAdapterListener.onBindViewHolderListener(holder, position)
+        }
     }
 
-    private fun populateFilteredDataset() {
+    override fun getItemCount(): Int =
+        vaultAccountsFrontBuffer.size
+
+    private fun notifyBackBufferChange(index: Int, changeType: BackBufferChangeType) {
+        if(accountNameFilterString.isNotEmpty()) return autoPopulateFrontBuffer()
+
+        when(changeType) {
+            BackBufferChangeType.INSERTED -> {
+                vaultAccountsFrontBuffer.add(index, vaultAccountsBackBuffer[index])
+                notifyItemInserted(index)
+            }
+
+            BackBufferChangeType.REMOVED -> {
+                vaultAccountsFrontBuffer.removeAt(index)
+                notifyItemRemoved(index)
+            }
+
+            BackBufferChangeType.CHANGED -> {
+                vaultAccountsFrontBuffer[index] = vaultAccountsBackBuffer[index]
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    private fun autoPopulateFrontBuffer() {
         val newFrontBuffer: MutableList<VaultAccount> = mutableListOf()
 
         for(element in vaultAccountsBackBuffer) {
@@ -67,26 +91,6 @@ class VaultAccountAdapter(
         notifyItemRangeInserted(0, newFrontBuffer.size)
     }
 
-    private fun notifyBackBufferChange(index: Int, what: NotifyWhat) {
-        if(accountNameFilterString.isNotEmpty()) return populateFilteredDataset()
-
-        when(what) {
-            NotifyWhat.INSERTED -> {
-                vaultAccountsFrontBuffer.add(index, vaultAccountsBackBuffer[index])
-                notifyItemInserted(index)
-            }
-
-            NotifyWhat.REMOVED -> {
-                vaultAccountsFrontBuffer.removeAt(index)
-                notifyItemRemoved(index)
-            }
-
-            NotifyWhat.CHANGED -> {
-                vaultAccountsFrontBuffer[index] = vaultAccountsBackBuffer[index]
-                notifyItemChanged(index)
-            }
-        }
-    }
 
     fun setVaultAccounts(vaultAccounts: Array<VaultAccount>) {
         clearVaultAccounts()
@@ -94,6 +98,14 @@ class VaultAccountAdapter(
         vaultAccountsBackBuffer.addAll(vaultAccounts)
         vaultAccountsFrontBuffer.addAll(vaultAccounts)
         notifyItemRangeInserted(0, vaultAccountsFrontBuffer.size)
+    }
+
+    fun setVaultAccount(vaultAccountIndex: Int, newVaultAccount: VaultAccount) {
+        if(vaultAccountIndex >= vaultAccountsBackBuffer.size)
+            throw IndexOutOfBoundsException("vaultAccountIndex exceeds ${vaultAccountsBackBuffer.size}")
+
+        vaultAccountsBackBuffer[vaultAccountIndex] = newVaultAccount
+        notifyBackBufferChange(vaultAccountIndex, BackBufferChangeType.CHANGED)
     }
 
     fun getVaultAccounts(): Array<VaultAccount> = vaultAccountsBackBuffer.toTypedArray()
@@ -105,7 +117,7 @@ class VaultAccountAdapter(
 
         return if(duplicate) false else {
             vaultAccountsBackBuffer.add(vaultAccount)
-            notifyBackBufferChange(vaultAccountsBackBuffer.size - 1, NotifyWhat.INSERTED)
+            notifyBackBufferChange(vaultAccountsBackBuffer.size - 1, BackBufferChangeType.INSERTED)
             true
         }
     }
@@ -117,7 +129,7 @@ class VaultAccountAdapter(
             vaultAccountsBackBuffer.removeAt(vaultAccountIndex)
         }
 
-        notifyBackBufferChange(vaultAccountIndex, NotifyWhat.REMOVED)
+        notifyBackBufferChange(vaultAccountIndex, BackBufferChangeType.REMOVED)
     }
 
     fun clearVaultAccounts() {
@@ -129,13 +141,6 @@ class VaultAccountAdapter(
         }
     }
 
-    fun setItemAt(vaultAccountIndex: Int, newVaultAccount: VaultAccount) {
-        if(vaultAccountIndex >= vaultAccountsBackBuffer.size)
-            throw IndexOutOfBoundsException("vaultAccountIndex exceeds ${vaultAccountsBackBuffer.size}")
-
-        vaultAccountsBackBuffer[vaultAccountIndex] = newVaultAccount
-        notifyBackBufferChange(vaultAccountIndex, NotifyWhat.CHANGED)
-    }
 
     fun itemAtFrontBuffer(index: Int): VaultAccount? =
         if(index < vaultAccountsFrontBuffer.size) vaultAccountsFrontBuffer[index] else null
@@ -157,7 +162,7 @@ class VaultAccountAdapter(
 
     fun setAccountNameFilter(filterText: String) {
         accountNameFilterString = filterText
-        populateFilteredDataset()
+        autoPopulateFrontBuffer()
     }
 
     fun hasAccountWithName(accountName: String): Boolean =
