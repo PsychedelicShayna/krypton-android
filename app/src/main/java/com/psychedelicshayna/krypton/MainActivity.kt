@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
 
             startActivityForResult(openFileIntent, loadVaultActivityResultRequestCode)
         } else {
-            Intent(this, VaultViewer::class.java).apply {
+            Intent(this, AccountViewer::class.java).apply {
                 putExtra("VaultFileUri", loadVaultFileUri.toString())
                 startActivity(this)
             }
@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newVault() {
-        val newVaultIntent = Intent(this, VaultViewer::class.java)
+        val newVaultIntent = Intent(this, AccountViewer::class.java)
         startActivity(newVaultIntent)
     }
 
