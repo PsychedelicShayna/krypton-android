@@ -14,7 +14,7 @@
             android:name=".EntryViewer"
             android:exported="false"/>
 
-        <activity android:name=".VaultViewer"/>
+        <activity android:name=".AccountViewer"/>
 
         <activity android:name=".MainActivity"
                   android:exported="true">
