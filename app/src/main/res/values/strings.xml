@@ -5,5 +5,8 @@
     <string name="btn_select_entries_text">Select</string>
     <string name="btn_generate_passwords_text">Generate Password(s)</string>
     <string name="btn_edit_mode_text">Edit</string>
+    <string name="dialog_new_entry_edittext_entry_name_hint">Entry Name</string>
+    <string name="dialog_new_entry_edittext_entry_value_hint">Entry Value</string>
+    <string name="dialog_new_account_edittext_account_name_hint">Account Name</string>
 
 </resources>

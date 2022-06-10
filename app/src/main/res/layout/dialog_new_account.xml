@@ -9,9 +9,9 @@
     android:paddingEnd="8dp">
 
     <EditText
-        android:id="@+id/etAccountName"
+        android:id="@+id/dialogNewAccountEditTextAccountName"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:hint="Account Name"/>
+        android:hint="@string/dialog_new_account_edittext_account_name_hint"/>
 
 </LinearLayout>

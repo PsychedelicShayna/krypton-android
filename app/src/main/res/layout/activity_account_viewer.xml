@@ -11,106 +11,106 @@ android:layout_marginTop="8dp"
 android:layout_marginBottom="8dp">
 
     <SearchView
-        android:id="@+id/svAccountSearch"
+        android:id="@+id/activityAccountViewerSearchViewAccountSearch"
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:queryHint="Account Name"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/dividerRecyclerViewToSearchView"
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerHorizontalDivider1"
         android:iconifiedByDefault="false"
     />
 
     <View
-        android:id="@+id/dividerRecyclerViewToSearchView"
+        android:id="@+id/activityAccountViewerHorizontalDivider1"
         android:layout_width="0dp"
         android:layout_height="2dp"
         android:background="?android:attr/listDivider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/svAccountSearch"
-        app:layout_constraintBottom_toTopOf="@id/rvVaultAccounts"
+        app:layout_constraintTop_toBottomOf="@id/activityAccountViewerSearchViewAccountSearch"
+        app:layout_constraintBottom_toTopOf="@id/activityAccountViewerRecyclerViewVaultAccounts"
         android:layout_marginTop="16dp"
     />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvVaultAccounts"
+        android:id="@+id/activityAccountViewerRecyclerViewVaultAccounts"
         android:layout_width="0dp"
         android:layout_height="0dp"
 
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dividerRecyclerViewToSearchView"
-        app:layout_constraintBottom_toTopOf="@+id/dividerControlsToRecycleView"
+        app:layout_constraintTop_toBottomOf="@+id/activityAccountViewerHorizontalDivider1"
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerHorizontalDivider2"
     />
 
     <View
-        android:id="@+id/dividerControlsToRecycleView"
+        android:id="@+id/activityAccountViewerHorizontalDivider2"
         android:layout_width="0dp"
         android:layout_height="2dp"
         android:background="?android:attr/listDivider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/rvVaultAccounts"
-        app:layout_constraintBottom_toTopOf="@id/btnAddAccount"
+        app:layout_constraintTop_toBottomOf="@id/activityAccountViewerRecyclerViewVaultAccounts"
+        app:layout_constraintBottom_toTopOf="@id/activityAccountViewerButtonAddAccount"
         android:layout_marginBottom="8dp"
     />
 
     <Button
-        android:id="@+id/btnAddAccount"
+        android:id="@+id/activityAccountViewerButtonAddAccount"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Add Account"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dividerControlsToRecycleView"
-        app:layout_constraintBottom_toTopOf="@+id/btnSave"
+        app:layout_constraintTop_toBottomOf="@+id/activityAccountViewerHorizontalDivider2"
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonSave"
     />
 
     <Button
-        android:id="@+id/btnSave"
+        android:id="@+id/activityAccountViewerButtonSave"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Save"
-        app:layout_constraintBottom_toTopOf="@+id/btnRevertChanges"
-        app:layout_constraintEnd_toStartOf="@+id/btnSaveAs"
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonRevertChanges"
+        app:layout_constraintEnd_toStartOf="@+id/activityAccountViewerButtonSaveAs"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btnSaveAs"
+        android:id="@+id/activityAccountViewerButtonSaveAs"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Save As"
-        app:layout_constraintBottom_toTopOf="@+id/btnRevertChanges"
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonRevertChanges"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnSave" />
+        app:layout_constraintStart_toEndOf="@+id/activityAccountViewerButtonSave" />
     <Button
-        android:id="@+id/btnRevertChanges"
+        android:id="@+id/activityAccountViewerButtonRevertChanges"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Revert Changes"
-        app:layout_constraintBottom_toTopOf="@+id/btnDiff"
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonDiff"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btnDiff"
+        android:id="@+id/activityAccountViewerButtonDiff"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Diff"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btnSecurity"
+        app:layout_constraintEnd_toStartOf="@+id/activityAccountViewerButtonSecurity"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btnSecurity"
+        android:id="@+id/activityAccountViewerButtonSecurity"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Security"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnDiff" />
+        app:layout_constraintStart_toEndOf="@+id/activityAccountViewerButtonDiff" />
 
 
 
