@@ -1,25 +1,44 @@
 package com.psychedelicshayna.krypton
 
-import android.view.ContextMenu
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.content.Context
+import android.view.*
+import android.widget.PopupMenu
+import android.widget.TextView
+import androidx.core.view.iterator
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_account_entry.view.*
-import java.security.KeyStore
-
 
 class EntryAdapter(
+    private val parentContext: Context,
     private val accountEntriesMap: Map<String, String>
 ) : RecyclerView.Adapter<EntryAdapter.EntryItemViewHolder>() {
-    class EntryItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class EntryItemViewHolder(
+        itemView: View,
+        private val parentContext: Context,
+    ) : RecyclerView.ViewHolder(itemView) {
+        var onContextMenuItemClickListener: ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
 
-    open class EntryAdapterListener {
-        open fun onCreateViewHolderListener(parent: ViewGroup, viewType: Int) = Unit
-        open fun onBindViewHolderListener(holder: EntryItemViewHolder, position: Int) = Unit
+        init {
+            itemView.setOnCreateContextMenuListener { menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo? ->
+                menu?.let { contextMenu ->
+                    MenuInflater(parentContext).inflate(R.menu.menu_entry_viewer_entry_context_menu, contextMenu)
+
+                    for(menuItem: MenuItem in contextMenu) {
+                        menuItem.setOnMenuItemClickListener {
+                            onContextMenuItemClickListener?.invoke(it, bindingAdapterPosition, menu, view, menuInfo)
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    var entryAdapterListener: EntryAdapterListener = EntryAdapterListener()
+    var onCreateViewHolderListener:
+            ((ViewGroup, Int) -> Unit)? = null
+
+    var onBindViewHolderListener:
+            ((EntryItemViewHolder, Int) -> Unit)? = null
 
     private val accountEntryPairs: MutableList<Pair<String, String>> =
         mutableListOf<Pair<String, String>>().apply {
@@ -34,18 +53,20 @@ class EntryAdapter(
                 R.layout.item_account_entry,
                 parent,
                 false
-            )
+            ),
+            parentContext
         ).also {
-            entryAdapterListener.onCreateViewHolderListener(parent, viewType)
+            onCreateViewHolderListener?.invoke(parent, viewType)
         }
     }
 
     override fun onBindViewHolder(holder: EntryItemViewHolder, position: Int) {
         holder.itemView.apply {
-            tvAccountEntryName.text = accountEntryPairs[position].first
-            tvAccountEntryValue.text = accountEntryPairs[position].second
-            entryAdapterListener.onBindViewHolderListener(holder, position)
+            itemAccountEntryTextViewEntryName.text = accountEntryPairs[position].first
+            itemAccountEntryTextViewEntryValue.text = accountEntryPairs[position].second
         }
+
+        onBindViewHolderListener?.invoke(holder, position)
     }
 
     override fun getItemCount(): Int {
@@ -81,8 +102,7 @@ class EntryAdapter(
     }
 
     fun setAccountEntry(accountEntryIndex: Int, newAccountEntry: Pair<String, String>)  {
-        accountEntryPairs.apply {
-            this[accountEntryIndex] = newAccountEntry
-        }
+        accountEntryPairs[accountEntryIndex] = newAccountEntry
+        notifyItemChanged(accountEntryIndex)
     }
 }
