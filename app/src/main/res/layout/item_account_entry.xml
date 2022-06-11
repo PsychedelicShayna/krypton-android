@@ -9,31 +9,31 @@
 >
 
     <TextView
-        android:id="@+id/tvAccountEntryName"
+        android:id="@+id/itemAccountEntryTextViewEntryName"
         android:text="Entry Name"
         android:layout_width="0dp"
         android:layout_height="25dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/dividerEntryPair"
+        app:layout_constraintBottom_toTopOf="@id/itemAccountEntryHorizontalDivider1"
         android:layout_marginTop="8dp"
         android:scrollbars="vertical"/>
 
     <View
-        android:id="@+id/dividerEntryPair"
+        android:id="@+id/itemAccountEntryHorizontalDivider1"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider"
 
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvAccountEntryName"
-        app:layout_constraintBottom_toBottomOf="@id/tvAccountEntryValue"/>
+        app:layout_constraintTop_toBottomOf="@id/itemAccountEntryTextViewEntryName"
+        app:layout_constraintBottom_toBottomOf="@id/itemAccountEntryTextViewEntryValue"/>
 
 
     <TextView
-        android:id="@+id/tvAccountEntryValue"
+        android:id="@+id/itemAccountEntryTextViewEntryValue"
         android:text="Entry Value"
         android:layout_width="0dp"
         android:layout_height="50dp"
@@ -42,7 +42,7 @@
 
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/dividerEntryPair"
+        app:layout_constraintTop_toBottomOf="@id/itemAccountEntryHorizontalDivider1"
         app:layout_constraintBottom_toBottomOf="parent"
         android:scrollbars="horizontal"
     />
