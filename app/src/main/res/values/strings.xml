@@ -12,6 +12,6 @@
     <!-- Strings for dialog_new_entry_values_input.xml -->
     <string name="dialog_entry_values_input_edittext_entry_name_hint">Entry Name</string>
     <string name="dialog_entry_values_input_edittext_entry_value_hint">Entry Value</string>
-    <string name="dialog_entry_values_input_button_generate_password">Generate Password</string>
+    <string name="dialog_entry_values_input_button_password_generator">Password Generator</string>
 
 </resources>

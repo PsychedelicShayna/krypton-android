@@ -25,9 +25,9 @@
         android:hint="@string/dialog_entry_values_input_edittext_entry_value_hint"/>
 
     <Button
-        android:id="@+id/dialogEntryValuesInputButtonGeneratePassword"
+        android:id="@+id/dialogEntryValuesInputButtonPasswordGenerator"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:text="@string/dialog_entry_values_input_button_generate_password"/>
+        android:text="@string/dialog_entry_values_input_button_password_generator"/>
 
 </LinearLayout>

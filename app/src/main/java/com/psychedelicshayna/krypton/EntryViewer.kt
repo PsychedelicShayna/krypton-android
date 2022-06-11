@@ -104,6 +104,16 @@ class EntryViewer : AppCompatActivity() {
                 return@editEntry
             }
 
+        val dialogEntryValuesInputButtonPasswordGenerator: Button =
+            dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputButtonPasswordGenerator) ?: run {
+                Toast.makeText(this, "Error! Could not find the view for the password generator button!", Toast.LENGTH_SHORT).show()
+                return@editEntry
+            }
+
+        dialogEntryValuesInputButtonPasswordGenerator.setOnClickListener {
+
+        }
+
         dialogEntryValuesInputEditTextEntryName.setText(entry.first)
         dialogEntryValuesInputEditTextEntryValue.setText(entry.second)
 
