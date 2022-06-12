@@ -154,6 +154,9 @@ class VaultAccountAdapter(
     fun getVaultAccountIndex(vaultAccount: VaultAccount): Int =
         vaultAccountBackBuffer.indexOf(vaultAccount)
 
+    fun getBackBufferIndexFromFrontBuffer(index: Int): Int? =
+        getVaultAccountIndexByName(itemAtFrontBuffer(index)?.AccountName ?: "")
+
     fun addVaultAccount(vaultAccount: VaultAccount): Boolean {
         val duplicate: Boolean = vaultAccountBackBuffer.any { element ->
             element.AccountName == vaultAccount.AccountName
@@ -167,13 +170,10 @@ class VaultAccountAdapter(
     }
 
     fun removeVaultAccount(vaultAccountIndex: Int) {
-        clearAccountNameSearch()
-
         if(vaultAccountIndex < vaultAccountBackBuffer.size) {
             vaultAccountBackBuffer.removeAt(vaultAccountIndex)
+            notifyBackBufferChange(vaultAccountIndex, BackBufferChangeType.REMOVED)
         }
-
-        notifyBackBufferChange(vaultAccountIndex, BackBufferChangeType.REMOVED)
     }
 
     fun clearVaultAccounts() {

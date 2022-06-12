@@ -119,7 +119,9 @@ class VaultAccountViewer : AppCompatActivity() {
             }
 
             R.id.accountViewerContextMenuItemRemoveAccount -> {
-                TODO("Not implemented.")
+                vaultAccountAdapter.getBackBufferIndexFromFrontBuffer(position)?.also {
+                    vaultAccountAdapter.removeVaultAccount(it)
+                }
             }
         }
     }
