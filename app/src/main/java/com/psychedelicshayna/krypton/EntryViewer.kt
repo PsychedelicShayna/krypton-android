@@ -76,6 +76,12 @@ class EntryViewer : AppCompatActivity() {
 
             R.id.menuEntryViewerEntryContextMenuItemRemove -> {
                 entryAdapter.removeAccountEntry(position)
+
+                setResult(RESULT_OK, Intent().apply {
+                    putExtra("VaultAccount", receivedVaultAccount.apply {
+                        AccountEntries = entryAdapter.accountEntryPairs.associate { it }
+                    })
+                })
             }
         }
     }
