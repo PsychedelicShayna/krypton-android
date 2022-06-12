@@ -122,7 +122,7 @@ class VaultAccountAdapter(
             vaultAccount.AccountName == accountName
         }
 
-        return if(foundVaultAccount != null) vaultAccountsFrontBuffer.indexOf(foundVaultAccount)
+        return if(foundVaultAccount != null) vaultAccountsBackBuffer.indexOf(foundVaultAccount)
                else foundVaultAccount
     }
 
