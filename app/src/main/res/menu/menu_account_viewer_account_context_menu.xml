@@ -6,8 +6,14 @@
         android:id="@+id/accountViewerContextMenuItemCopyAccountName"
         android:title="Copy Account Name"
         app:showAsAction="never"/>
+
     <item
         android:id="@+id/accountViewerContextMenuItemEditAccountName"
         android:title="Edit Account Name"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/accountViewerContextMenuItemRemoveAccount"
+        android:title="Remove Account"
         app:showAsAction="never"/>
 </menu>

@@ -118,7 +118,9 @@ class VaultAccountViewer : AppCompatActivity() {
                 TODO("Not implemented")
             }
 
-            // TODO: Implement remove account button.
+            R.id.accountViewerContextMenuItemRemoveAccount -> {
+                TODO("Not implemented.")
+            }
         }
     }
 
