@@ -13,33 +13,37 @@ class VaultAccountEntryAdapter(
     private val parentContext: Context,
     private val accountEntriesMap: Map<String, String>
 ) : RecyclerView.Adapter<VaultAccountEntryAdapter.EntryItemViewHolder>() {
+
     class EntryItemViewHolder(
-        val targetItemView: View,
-        private val parentContext: Context,
-    ) : RecyclerView.ViewHolder(targetItemView) {
+        val parentContext: Context,
+        val representedItemView: View
+    ) : RecyclerView.ViewHolder(representedItemView) {
         var onContextMenuItemClickListener: ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
 
-        init {
-            targetItemView.setOnCreateContextMenuListener { menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo? ->
-                menu?.let { contextMenu ->
-                    MenuInflater(parentContext).inflate(R.menu.menu_entry_viewer_entry_context_menu, contextMenu)
+        private fun onCreateContextMenuListener(menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
+            menu?.let { contextMenu ->
+                MenuInflater(parentContext).inflate(R.menu.menu_entry_viewer_entry_context_menu, contextMenu)
 
-                    for(menuItem: MenuItem in contextMenu) {
-                        menuItem.setOnMenuItemClickListener {
-                            onContextMenuItemClickListener?.invoke(it, bindingAdapterPosition, menu, view, menuInfo)
-                            return@setOnMenuItemClickListener true
-                        }
+                for(menuItem: MenuItem in contextMenu) {
+                    menuItem.setOnMenuItemClickListener {
+
+                        onContextMenuItemClickListener?.invoke(
+                            menuItem, bindingAdapterPosition, menu, view, menuInfo
+                        )
+
+                        return@setOnMenuItemClickListener true
                     }
                 }
             }
         }
+
+        init {
+            representedItemView.setOnCreateContextMenuListener(::onCreateContextMenuListener)
+        }
     }
 
-    var onCreateViewHolderListener:
-            ((ViewGroup, Int) -> Unit)? = null
-
-    var onBindViewHolderListener:
-            ((EntryItemViewHolder, Int) -> Unit)? = null
+    var onCreateViewHolderListener: ((ViewGroup, Int) -> Unit)? = null
+    var onBindViewHolderListener: ((EntryItemViewHolder, Int) -> Unit)? = null
 
     val accountEntryPairs: MutableList<Pair<String, String>> =
         mutableListOf<Pair<String, String>>().apply {
@@ -51,24 +55,23 @@ class VaultAccountEntryAdapter(
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EntryItemViewHolder {
         return EntryItemViewHolder(
+            parentContext,
             LayoutInflater.from(parent.context).inflate(
                 R.layout.item_vault_account_entry,
                 parent,
                 false
-            ),
-            parentContext
-        ).also {
+            )
+        ).also { viewHolder ->
             onCreateViewHolderListener?.invoke(parent, viewType)
 
-            it.targetItemView.findViewById<TextView>(R.id.itemAccountEntryTextViewEntryValue)?.apply {
+            // Allow TextView responsible for holding entry values to be scrollable.
+            viewHolder.representedItemView.findViewById<TextView>(R.id.itemAccountEntryTextViewEntryValue)?.apply {
                 movementMethod = ScrollingMovementMethod()
 
                 setOnTouchListener(View.OnTouchListener { view: View?, _ ->
                     view?.parent?.requestDisallowInterceptTouchEvent(true)
                     return@OnTouchListener false
                 })
-            } ?: run {
-
             }
         }
     }

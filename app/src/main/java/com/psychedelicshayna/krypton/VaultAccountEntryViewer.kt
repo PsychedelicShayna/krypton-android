@@ -17,8 +17,6 @@ class VaultAccountEntryViewer : AppCompatActivity() {
     private lateinit var clipboardManager: ClipboardManager
     private lateinit var receivedVaultAccount: VaultAccount
 
-    private var latestContextMenuItemPressed: View? = null
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,21 +24,18 @@ class VaultAccountEntryViewer : AppCompatActivity() {
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
-        receivedVaultAccount = (intent.getSerializableExtra("VaultAccount") as VaultAccount?).let {
-            if (it != null) {
-                it
-            } else {
-                Toast.makeText(this, "Received no vault account object!", Toast.LENGTH_LONG).show()
-                finish()
-                return
-            }
+        receivedVaultAccount = (intent.getSerializableExtra("VaultAccount") as VaultAccount?) ?: run {
+            Toast.makeText(this, "Error! VaultAccountEntryViewer received no \"VaultAccount\" extra!", Toast.LENGTH_LONG).show()
+            finish()
+
+            return@onCreate
         }
 
-        vaultAccountEntryAdapter = VaultAccountEntryAdapter(this, receivedVaultAccount.AccountEntries).apply {
-            onBindViewHolderListener = { holder, position ->
-                holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
-                    onEntryAdapterItemViewContextMenuItemSelected(menuItem, position, contextMenu, view, contextMenuInfo)
-                }
+        vaultAccountEntryAdapter = VaultAccountEntryAdapter(this, receivedVaultAccount.AccountEntries)
+
+        vaultAccountEntryAdapter.onBindViewHolderListener = { holder, _ ->
+            holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
+                onEntryAdapterItemViewContextMenuItemSelected(menuItem, position, contextMenu, view, contextMenuInfo)
             }
         }
 

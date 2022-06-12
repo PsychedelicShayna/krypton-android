@@ -35,9 +35,7 @@ class VaultAccountViewer : AppCompatActivity() {
     private val vaultSecurity: VaultSecurity = VaultSecurity()
     private var vaultEncryptionEnabled: Boolean = false
 
-    private var loadedVaultFileUri: Uri? = null
-
-    private var latestContextMenuItemPressed: View? = null
+    private var activeVaultFileUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,77 +43,36 @@ class VaultAccountViewer : AppCompatActivity() {
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
-        vaultAccountAdapter = VaultAccountAdapter(mutableListOf())
+        vaultAccountAdapter = VaultAccountAdapter(this, mutableListOf())
 
-        vaultAccountAdapter.vaultAccountAdapterListener = object : VaultAccountAdapter.VaultAccountAdapterListener() {
-            override fun onBindViewHolderListener(holder: VaultAccountAdapter.AccountItemViewHolder, position: Int) {
-                super.onBindViewHolderListener(holder, position)
-                registerForContextMenu(holder.itemView)
+        vaultAccountAdapter.onBindViewHolderListener = { holder, position ->
+            holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
+                onAccountAdapterItemViewContextMenuItemSelected(menuItem, position, contextMenu, view, contextMenuInfo)
+            }
 
-                holder.itemView.setOnClickListener { itemView: View ->
-                    vaultAccountAdapter.itemAtFrontBuffer(position)?.also { vaultAccount ->
-                        Intent(this@VaultAccountViewer, VaultAccountEntryViewer::class.java).also { intent ->
-                            intent.putExtra("VaultAccount", vaultAccount)
-                            startActivityForResult(intent, ActivityResultRequestCodes.EntryViewer.updateAccount)
-                        }
-                    }
+            holder.itemView.setOnClickListener { itemView: View ->
+                val clickedVaultAccount: VaultAccount? = vaultAccountAdapter.itemAtFrontBuffer(position)
+
+                val openEntryViewerIntent = Intent(
+                    this,
+                    VaultAccountEntryViewer::class.java
+                ).apply {
+                    putExtra("VaultAccount", clickedVaultAccount)
                 }
+
+                startActivityForResult(openEntryViewerIntent, ActivityResultRequestCodes.EntryViewer.updateAccount)
             }
         }
 
-        loadedVaultFileUri = intent.getStringExtra("VaultFileUri")?.let { Uri.parse(it) }
+        activeVaultFileUri = intent.getStringExtra("VaultFileUri")?.let { Uri.parse(it) }
 
         findViewById<RecyclerView>(R.id.activityAccountViewerRecyclerViewVaultAccounts).apply {
             layoutManager = LinearLayoutManager(this@VaultAccountViewer)
             adapter = vaultAccountAdapter
         }
 
-        activityAccountViewerButtonAddAccount.setOnClickListener { addAccount() }
-
-        activityAccountViewerButtonSave.setOnClickListener {
-            loadedVaultFileUri.let {
-                if(it != null) { it } else {
-                    Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
-                    return@setOnClickListener
-                }
-            }
-
-            if(vaultEncryptionEnabled) {
-                val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
-                    R.layout.dialog_input_vault_password, null
-                )
-
-                val alertDialogBuilder = AlertDialog.Builder(this)
-                alertDialogBuilder.setView(vaultCredentialsPromptView)
-
-                alertDialogBuilder.apply {
-                    setCancelable(true)
-                    setTitle("Retype Your Password")
-
-                    setPositiveButton("Encrypt") { _, _ -> }
-
-                    setNeutralButton("Cancel")   { _, _ ->
-                        Toast.makeText(this@VaultAccountViewer, "Vault wasn't saved, password wasn't provided!", Toast.LENGTH_LONG).show()
-                    }
-                }
-
-                val alertDialog: AlertDialog = alertDialogBuilder.create()
-                alertDialog.show()
-
-                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                    val etPassword: EditText = vaultCredentialsPromptView.findViewById(R.id.etPassword)
-
-                    if(vaultSecurity.verifyPassword(etPassword.text.toString())) {
-                        alertDialog.dismiss()
-                        saveVault()
-                    } else {
-                        Toast.makeText(this, "The password doesn't match the password used to load the vault!", Toast.LENGTH_LONG).show()
-                    }
-                }
-            } else {
-                saveVault()
-            }
-        }
+        activityAccountViewerButtonAddAccount.setOnClickListener(::addAccount)
+        activityAccountViewerButtonSave.setOnClickListener(::onSaveButtonClickListener)
 
         activityAccountViewerButtonSaveAs.setOnClickListener        { saveVaultAs() }
 
@@ -135,44 +92,34 @@ class VaultAccountViewer : AppCompatActivity() {
                 if(text == null) return false
 
                 if(text.isEmpty()) {
-                    vaultAccountAdapter.clearAccountNameFilter()
+                    vaultAccountAdapter.clearAccountNameSearch()
                 } else {
-                    vaultAccountAdapter.setAccountNameFilter(text)
+                    vaultAccountAdapter.searchAccountNames(text)
                 }
 
                 return true
             }
         })
 
-        if(loadedVaultFileUri != null) loadVaultFile(loadedVaultFileUri!!)
+        if(activeVaultFileUri != null) loadVaultFile(activeVaultFileUri!!)
     }
 
-    override fun onCreateContextMenu(menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
-        super.onCreateContextMenu(menu, view, menuInfo)
-        menuInflater.inflate(R.menu.menu_account_viewer_account_context_menu, menu)
-        latestContextMenuItemPressed = view
-    }
+    private fun onAccountAdapterItemViewContextMenuItemSelected(menuItem: MenuItem, position: Int, contextMenu: ContextMenu?, view: View?, contextMenuInfo: ContextMenu.ContextMenuInfo?) {
+        val selectedVaultAccount: VaultAccount = vaultAccountAdapter.itemAtBackBuffer(position) ?: return
 
-    override fun onContextItemSelected(item: MenuItem): Boolean {
-        val itemPressedView: View = latestContextMenuItemPressed ?: run {
-            Toast.makeText(this, "View was null", Toast.LENGTH_SHORT).show()
-            return@onContextItemSelected true
-        }
-
-        val textViewAccountName: TextView =
-            itemPressedView.findViewById(R.id.tvVaultAccountName)
-
-        when(item.itemId) {
-            R.id.accountViewerContextMenuItemEditAccountName -> {
+        when(menuItem.itemId) {
+            R.id.accountViewerContextMenuItemCopyAccountName -> {
                 clipboardManager.setPrimaryClip(
-                    ClipData.newPlainText("entryName", textViewAccountName.text)
+                    ClipData.newPlainText("accountName", selectedVaultAccount.AccountName)
                 )
-
-                return true
             }
-        }
 
-        return super.onContextItemSelected(item)
+            R.id.accountViewerContextMenuItemEditAccountName -> {
+                TODO("Not implemented")
+            }
+
+            // TODO: Implement remove account button.
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
@@ -200,6 +147,51 @@ class VaultAccountViewer : AppCompatActivity() {
 
                 vaultAccountAdapter.setVaultAccount(updatedVaultAccountIndex, updatedVaultAccount)
             }
+        }
+    }
+
+    private fun onSaveButtonClickListener(view: View) {
+        activeVaultFileUri.let {
+            if(it != null) { it } else {
+                Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
+        if(vaultEncryptionEnabled) {
+            val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
+                R.layout.dialog_input_vault_password, null
+            )
+
+            val alertDialogBuilder = AlertDialog.Builder(this)
+            alertDialogBuilder.setView(vaultCredentialsPromptView)
+
+            alertDialogBuilder.apply {
+                setCancelable(true)
+                setTitle("Retype Your Password")
+
+                setPositiveButton("Encrypt") { _, _ -> }
+
+                setNeutralButton("Cancel")   { _, _ ->
+                    Toast.makeText(this@VaultAccountViewer, "Vault wasn't saved, password wasn't provided!", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            val alertDialog: AlertDialog = alertDialogBuilder.create()
+            alertDialog.show()
+
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val etPassword: EditText = vaultCredentialsPromptView.findViewById(R.id.etPassword)
+
+                if(vaultSecurity.verifyPassword(etPassword.text.toString())) {
+                    alertDialog.dismiss()
+                    saveVault()
+                } else {
+                    Toast.makeText(this, "The password doesn't match the password used to load the vault!", Toast.LENGTH_LONG).show()
+                }
+            }
+        } else {
+            saveVault()
         }
     }
 
@@ -337,7 +329,7 @@ class VaultAccountViewer : AppCompatActivity() {
         alertDialog.show()
     }
 
-    private fun addAccount() {
+    private fun addAccount(view: View) {
         val dialogNewAccountView: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_input_account_name,
             null
@@ -417,7 +409,7 @@ class VaultAccountViewer : AppCompatActivity() {
     }
 
     private fun saveVault(uri: Uri? = null) {
-        val vaultFileUri: Uri = uri ?: loadedVaultFileUri.let {
+        val vaultFileUri: Uri = uri ?: activeVaultFileUri.let {
             if(it != null) { it } else {
                 Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
                 return
@@ -539,7 +531,7 @@ class VaultAccountViewer : AppCompatActivity() {
 
                 backupOfVaultAccounts.clear()
                 backupOfVaultAccounts.addAll(vaultAccountAdapter.getVaultAccounts())
-                loadedVaultFileUri = vaultFileUri
+                activeVaultFileUri = vaultFileUri
 
             } else {
                 setTitle("Integrity Check Failed!")
