@@ -249,7 +249,7 @@ class EntryViewer : AppCompatActivity() {
 
             entryAdapter.setAccountEntry(position, Pair(entryName, entryValue))
 
-            setResult(ActivityResultRequestCodes.EntryViewer.updateAccount, Intent().apply {
+            setResult(RESULT_OK, Intent().apply {
                 putExtra("VaultAccount", receivedVaultAccount.apply {
                     AccountEntries = entryAdapter.accountEntryPairs.associate { it }
                 })
