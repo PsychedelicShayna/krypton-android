@@ -1,27 +1,30 @@
 package com.psychedelicshayna.krypton
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.ContextMenu
-import android.view.LayoutInflater
-import android.view.MenuItem
-import android.view.View
+import android.view.*
+import android.view.View.OnTouchListener
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_entry_viewer.*
 import kotlinx.android.synthetic.main.dialog_entries_password_generator.view.*
 
-class EntryViewer : AppCompatActivity() {
+
+class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
     private lateinit var entryAdapter: EntryAdapter
     private lateinit var clipboardManager: ClipboardManager
     private lateinit var receivedVaultAccount: VaultAccount
 
     private var latestContextMenuItemPressed: View? = null
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_entry_viewer)
@@ -29,7 +32,9 @@ class EntryViewer : AppCompatActivity() {
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
         receivedVaultAccount = (intent.getSerializableExtra("VaultAccount") as VaultAccount?).let {
-            if(it != null) { it } else {
+            if (it != null) {
+                it
+            } else {
                 Toast.makeText(this, "Received no vault account object!", Toast.LENGTH_LONG).show()
                 finish()
                 return

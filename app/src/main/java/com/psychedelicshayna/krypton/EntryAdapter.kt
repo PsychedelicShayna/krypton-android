@@ -1,25 +1,29 @@
 package com.psychedelicshayna.krypton
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.text.method.ScrollingMovementMethod
 import android.view.*
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.view.iterator
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_account_entry.view.*
+import org.w3c.dom.Text
 
 class EntryAdapter(
     private val parentContext: Context,
     private val accountEntriesMap: Map<String, String>
 ) : RecyclerView.Adapter<EntryAdapter.EntryItemViewHolder>() {
     class EntryItemViewHolder(
-        itemView: View,
+        val targetItemView: View,
         private val parentContext: Context,
-    ) : RecyclerView.ViewHolder(itemView) {
+    ) : RecyclerView.ViewHolder(targetItemView) {
         var onContextMenuItemClickListener: ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
 
         init {
-            itemView.setOnCreateContextMenuListener { menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo? ->
+            targetItemView.setOnCreateContextMenuListener { menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo? ->
                 menu?.let { contextMenu ->
                     MenuInflater(parentContext).inflate(R.menu.menu_entry_viewer_entry_context_menu, contextMenu)
 
@@ -47,6 +51,7 @@ class EntryAdapter(
             })
         }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EntryItemViewHolder {
         return EntryItemViewHolder(
             LayoutInflater.from(parent.context).inflate(
@@ -57,6 +62,17 @@ class EntryAdapter(
             parentContext
         ).also {
             onCreateViewHolderListener?.invoke(parent, viewType)
+
+            it.targetItemView.findViewById<TextView>(R.id.itemAccountEntryTextViewEntryValue)?.apply {
+                movementMethod = ScrollingMovementMethod()
+
+                setOnTouchListener(View.OnTouchListener { view: View?, _ ->
+                    view?.parent?.requestDisallowInterceptTouchEvent(true)
+                    return@OnTouchListener false
+                })
+            } ?: run {
+
+            }
         }
     }
 
