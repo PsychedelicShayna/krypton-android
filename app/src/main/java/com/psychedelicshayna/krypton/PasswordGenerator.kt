@@ -19,7 +19,7 @@ class PasswordGenerator {
     )
 
     fun generatePassword(length: Int, characterClassSpec: CharacterClassSpec): String {
-        if(length <= 0) return ""
+        if (length <= 0) return ""
 
         val secureRandom: Random = SecureRandom().asKotlinRandom()
 
@@ -27,14 +27,16 @@ class PasswordGenerator {
             characterClassSpec.run {
                 listOf(uppercase, lowercase, numerical, special, extra)
             }.forEach {
-                if(it.enabled) add(it.characters)
+                if (it.enabled) add(it.characters)
             }
         }
 
-        return buildString(length) {
-            for(i in 1..length) append(
-                enabledCharacterClasses.random(secureRandom).random(secureRandom)
-            )
+        return if (enabledCharacterClasses.isEmpty()) "" else {
+            buildString(length) {
+                for (i in 1..length) append(
+                    enabledCharacterClasses.random(secureRandom).random(secureRandom)
+                )
+            }
         }
     }
 }
