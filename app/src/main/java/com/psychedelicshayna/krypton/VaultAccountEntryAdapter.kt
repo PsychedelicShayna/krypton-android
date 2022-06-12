@@ -4,18 +4,15 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.text.method.ScrollingMovementMethod
 import android.view.*
-import android.widget.PopupMenu
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.view.iterator
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.item_account_entry.view.*
-import org.w3c.dom.Text
+import kotlinx.android.synthetic.main.item_vault_account_entry.view.*
 
-class EntryAdapter(
+class VaultAccountEntryAdapter(
     private val parentContext: Context,
     private val accountEntriesMap: Map<String, String>
-) : RecyclerView.Adapter<EntryAdapter.EntryItemViewHolder>() {
+) : RecyclerView.Adapter<VaultAccountEntryAdapter.EntryItemViewHolder>() {
     class EntryItemViewHolder(
         val targetItemView: View,
         private val parentContext: Context,
@@ -55,7 +52,7 @@ class EntryAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EntryItemViewHolder {
         return EntryItemViewHolder(
             LayoutInflater.from(parent.context).inflate(
-                R.layout.item_account_entry,
+                R.layout.item_vault_account_entry,
                 parent,
                 false
             ),

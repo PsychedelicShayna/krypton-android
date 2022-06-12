@@ -15,7 +15,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.activity_account_viewer.*
+import kotlinx.android.synthetic.main.activity_vault_account_viewer.*
 import org.json.*
 import java.nio.charset.StandardCharsets
 import org.apache.commons.io.IOUtils
@@ -26,7 +26,7 @@ import java.lang.Exception
 import java.security.MessageDigest
 
 
-class AccountViewer : AppCompatActivity() {
+class VaultAccountViewer : AppCompatActivity() {
     private lateinit var clipboardManager: ClipboardManager
     private lateinit var vaultAccountAdapter: VaultAccountAdapter
 
@@ -41,7 +41,7 @@ class AccountViewer : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_account_viewer)
+        setContentView(R.layout.activity_vault_account_viewer)
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
@@ -54,7 +54,7 @@ class AccountViewer : AppCompatActivity() {
 
                 holder.itemView.setOnClickListener { itemView: View ->
                     vaultAccountAdapter.itemAtFrontBuffer(position)?.also { vaultAccount ->
-                        Intent(this@AccountViewer, EntryViewer::class.java).also { intent ->
+                        Intent(this@VaultAccountViewer, VaultAccountEntryViewer::class.java).also { intent ->
                             intent.putExtra("VaultAccount", vaultAccount)
                             startActivityForResult(intent, ActivityResultRequestCodes.EntryViewer.updateAccount)
                         }
@@ -66,7 +66,7 @@ class AccountViewer : AppCompatActivity() {
         loadedVaultFileUri = intent.getStringExtra("VaultFileUri")?.let { Uri.parse(it) }
 
         findViewById<RecyclerView>(R.id.activityAccountViewerRecyclerViewVaultAccounts).apply {
-            layoutManager = LinearLayoutManager(this@AccountViewer)
+            layoutManager = LinearLayoutManager(this@VaultAccountViewer)
             adapter = vaultAccountAdapter
         }
 
@@ -82,7 +82,7 @@ class AccountViewer : AppCompatActivity() {
 
             if(vaultEncryptionEnabled) {
                 val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
-                    R.layout.dialog_vault_credentials, null
+                    R.layout.dialog_input_vault_password, null
                 )
 
                 val alertDialogBuilder = AlertDialog.Builder(this)
@@ -95,7 +95,7 @@ class AccountViewer : AppCompatActivity() {
                     setPositiveButton("Encrypt") { _, _ -> }
 
                     setNeutralButton("Cancel")   { _, _ ->
-                        Toast.makeText(this@AccountViewer, "Vault wasn't saved, password wasn't provided!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@VaultAccountViewer, "Vault wasn't saved, password wasn't provided!", Toast.LENGTH_LONG).show()
                     }
                 }
 
@@ -154,20 +154,16 @@ class AccountViewer : AppCompatActivity() {
     }
 
     override fun onContextItemSelected(item: MenuItem): Boolean {
-        val itemPressedView: View = latestContextMenuItemPressed.let {
-            if(it != null) {
-                it
-            } else {
-                Toast.makeText(this, "View was null", Toast.LENGTH_SHORT).show()
-                return true
-            }
+        val itemPressedView: View = latestContextMenuItemPressed ?: run {
+            Toast.makeText(this, "View was null", Toast.LENGTH_SHORT).show()
+            return@onContextItemSelected true
         }
 
         val textViewAccountName: TextView =
             itemPressedView.findViewById(R.id.tvVaultAccountName)
 
         when(item.itemId) {
-            R.id.menuItemCopyAccountName -> {
+            R.id.accountViewerContextMenuItemEditAccountName -> {
                 clipboardManager.setPrimaryClip(
                     ClipData.newPlainText("entryName", textViewAccountName.text)
                 )
@@ -192,13 +188,13 @@ class AccountViewer : AppCompatActivity() {
         if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.EntryViewer.updateAccount) {
             resultData?.run {
                 val updatedVaultAccount: VaultAccount = (getSerializableExtra("VaultAccount") as VaultAccount?) ?: run {
-                    Toast.makeText(this@AccountViewer, "Error! Received null as the updated vault account extra!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@VaultAccountViewer, "Error! Received null as the updated vault account extra!", Toast.LENGTH_LONG).show()
                     return@onActivityResult
                 }
 
 
                 val updatedVaultAccountIndex: Int = vaultAccountAdapter.getVaultAccountIndexByName(updatedVaultAccount.AccountName) ?: run {
-                    Toast.makeText(this@AccountViewer, "Error! The index of the updated account was null!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@VaultAccountViewer, "Error! The index of the updated account was null!", Toast.LENGTH_LONG).show()
                     return@onActivityResult
                 }
 
@@ -292,7 +288,7 @@ class AccountViewer : AppCompatActivity() {
 
     private fun configureVaultSecurity() {
         val vaultSecurityDialogView: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_vault_security,
+            R.layout.dialog_vault_security_configuration,
             null
         )
 
@@ -343,7 +339,7 @@ class AccountViewer : AppCompatActivity() {
 
     private fun addAccount() {
         val dialogNewAccountView: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_new_account,
+            R.layout.dialog_input_account_name,
             null
         )
 
@@ -599,7 +595,7 @@ class AccountViewer : AppCompatActivity() {
         Toast.makeText(this, "Assuming the vault is encrypted.", Toast.LENGTH_LONG).show()
 
         val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_vault_credentials, null
+            R.layout.dialog_input_vault_password, null
         )
 
         val alertDialogBuilder = AlertDialog.Builder(this)
@@ -609,7 +605,7 @@ class AccountViewer : AppCompatActivity() {
             setCancelable(false)
             setTitle("Provide Decryption Parameters")
             setPositiveButton("Decrypt") { _, _ -> }
-            setNeutralButton("Cancel")   { _, _ -> this@AccountViewer.finish() }
+            setNeutralButton("Cancel")   { _, _ -> this@VaultAccountViewer.finish() }
         }
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
@@ -648,7 +644,7 @@ class AccountViewer : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            this@AccountViewer.finish()
+            this@VaultAccountViewer.finish()
         }
     }
 

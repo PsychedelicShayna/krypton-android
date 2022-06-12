@@ -3,22 +3,17 @@ package com.psychedelicshayna.krypton
 import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
-import android.view.View.OnTouchListener
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.activity_entry_viewer.*
-import kotlinx.android.synthetic.main.dialog_entries_password_generator.view.*
+import kotlinx.android.synthetic.main.activity_vault_account_entry_viewer.*
 
-
-class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
-    private lateinit var entryAdapter: EntryAdapter
+class VaultAccountEntryViewer : AppCompatActivity() {
+    private lateinit var vaultAccountEntryAdapter: VaultAccountEntryAdapter
     private lateinit var clipboardManager: ClipboardManager
     private lateinit var receivedVaultAccount: VaultAccount
 
@@ -27,7 +22,7 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_entry_viewer)
+        setContentView(R.layout.activity_vault_account_entry_viewer)
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
@@ -41,7 +36,7 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
             }
         }
 
-        entryAdapter = EntryAdapter(this, receivedVaultAccount.AccountEntries).apply {
+        vaultAccountEntryAdapter = VaultAccountEntryAdapter(this, receivedVaultAccount.AccountEntries).apply {
             onBindViewHolderListener = { holder, position ->
                 holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
                     onEntryAdapterItemViewContextMenuItemSelected(menuItem, position, contextMenu, view, contextMenuInfo)
@@ -52,14 +47,14 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
         activityEntryViewerTextViewAccountName.text = receivedVaultAccount.AccountName
 
         activityEntryViewerRecyclerViewEntries.layoutManager = LinearLayoutManager(this)
-        activityEntryViewerRecyclerViewEntries.adapter = entryAdapter
+        activityEntryViewerRecyclerViewEntries.adapter = vaultAccountEntryAdapter
 
         findViewById<Button>(R.id.activityEntryViewerButtonAddEntry).setOnClickListener { addEntry() }
     }
 
     private fun onEntryAdapterItemViewContextMenuItemSelected(menuItem: MenuItem, position: Int, contextMenu: ContextMenu?, view: View?, contextMenuInfo: ContextMenu.ContextMenuInfo?) {
-        val selectedEntryPair: Pair<String, String> = entryAdapter[position] ?: run {
-            Toast.makeText(this@EntryViewer, "The index of the selected item was out of range!", Toast.LENGTH_LONG).show()
+        val selectedEntryPair: Pair<String, String> = vaultAccountEntryAdapter[position] ?: run {
+            Toast.makeText(this@VaultAccountEntryViewer, "The index of the selected item was out of range!", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -81,11 +76,11 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
             }
 
             R.id.menuEntryViewerEntryContextMenuItemRemove -> {
-                entryAdapter.removeAccountEntry(position)
+                vaultAccountEntryAdapter.removeAccountEntry(position)
 
                 setResult(RESULT_OK, Intent().apply {
                     putExtra("VaultAccount", receivedVaultAccount.apply {
-                        AccountEntries = entryAdapter.accountEntryPairs.associate { it }
+                        AccountEntries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }
                     })
                 })
             }
@@ -94,7 +89,7 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
 
     private fun showPasswordGeneratorDialog(insertToNameCallback: (AlertDialog, String) -> Unit, insertToValueCallback: (AlertDialog, String) -> Unit) {
         val dialogEntriesPasswordGenerator: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_entries_password_generator,
+            R.layout.dialog_vault_account_entry_password_generator,
             null
         )
 
@@ -146,13 +141,13 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
     }
 
     private fun editEntry(position: Int) {
-        val entry: Pair<String, String> = entryAdapter[position] ?: run {
+        val entry: Pair<String, String> = vaultAccountEntryAdapter[position] ?: run {
             Toast.makeText(this, "Error! Cannot access the entry at index $position, index out of range!", Toast.LENGTH_LONG).show()
             return
         }
 
         val dialogEntryValuesInput: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_entry_values_input,
+            R.layout.dialog_input_account_entry_values,
             null
         )
 
@@ -199,16 +194,16 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
                 return@setOnClickListener
             }
 
-            if(entryAdapter.hasEntryWithName(entryName) &&  entryName != entry.first) {
+            if(vaultAccountEntryAdapter.hasEntryWithName(entryName) &&  entryName != entry.first) {
                 Toast.makeText(this, "An entry with that name already exists!", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
-            entryAdapter.setAccountEntry(position, Pair(entryName, entryValue))
+            vaultAccountEntryAdapter.setAccountEntry(position, Pair(entryName, entryValue))
 
             setResult(RESULT_OK, Intent().apply {
                 putExtra("VaultAccount", receivedVaultAccount.apply {
-                    AccountEntries = entryAdapter.accountEntryPairs.associate { it }
+                    AccountEntries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }
                 })
             })
 
@@ -228,7 +223,7 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
 
     private fun addEntry() {
         val dialogEntryValuesInput: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_entry_values_input,
+            R.layout.dialog_input_account_entry_values,
             null
         )
 
@@ -263,16 +258,16 @@ class EntryViewer : AppCompatActivity() /*, OnTouchListener */ {
                 return@setOnClickListener
             }
 
-            if(entryAdapter.hasEntryWithName(entryName)) {
+            if(vaultAccountEntryAdapter.hasEntryWithName(entryName)) {
                 Toast.makeText(this, "An entry with that name already exists!", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
-            entryAdapter.addAccountEntry(entryName, entryValue)
+            vaultAccountEntryAdapter.addAccountEntry(entryName, entryValue)
 
             setResult(RESULT_OK, Intent().apply {
                 putExtra("VaultAccount", receivedVaultAccount.apply {
-                    AccountEntries = entryAdapter.accountEntryPairs.associate { it }
+                    AccountEntries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }
                 })
             })
 

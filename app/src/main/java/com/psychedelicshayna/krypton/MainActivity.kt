@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_main_layout.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
 
             startActivityForResult(openFileIntent, loadVaultActivityResultRequestCode)
         } else {
-            Intent(this, AccountViewer::class.java).apply {
+            Intent(this, VaultAccountViewer::class.java).apply {
                 putExtra("VaultFileUri", loadVaultFileUri.toString())
                 startActivity(this)
             }
@@ -61,13 +61,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newVault() {
-        val newVaultIntent = Intent(this, AccountViewer::class.java)
+        val newVaultIntent = Intent(this, VaultAccountViewer::class.java)
         startActivity(newVaultIntent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_main_layout)
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 

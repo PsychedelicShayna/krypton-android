@@ -3,8 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/menuItemCopyAccountName"
+        android:id="@+id/accountViewerContextMenuItemCopyAccountName"
         android:title="Copy Account Name"
         app:showAsAction="never"/>
-
+    <item
+        android:id="@+id/accountViewerContextMenuItemEditAccountName"
+        android:title="Edit Account Name"
+        app:showAsAction="never"/>
 </menu>
