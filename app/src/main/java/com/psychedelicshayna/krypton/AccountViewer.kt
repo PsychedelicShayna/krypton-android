@@ -543,6 +543,8 @@ class AccountViewer : AppCompatActivity() {
 
                 backupOfVaultAccounts.clear()
                 backupOfVaultAccounts.addAll(vaultAccountAdapter.getVaultAccounts())
+                loadedVaultFileUri = vaultFileUri
+
             } else {
                 setTitle("Integrity Check Failed!")
                 setMessage("The SHA-256 hash of the vault in RAM does not match the hash of the vault on the disk! The data was not stored properly. " +
