@@ -55,8 +55,8 @@ class AccountViewer : AppCompatActivity() {
                 holder.itemView.setOnClickListener { itemView: View ->
                     vaultAccountAdapter.itemAtFrontBuffer(position)?.also { vaultAccount ->
                         Intent(this@AccountViewer, EntryViewer::class.java).also { intent ->
-                            intent.putExtra("VaultAccountObject", vaultAccount)
-                            startActivity(intent)
+                            intent.putExtra("VaultAccount", vaultAccount)
+                            startActivityForResult(intent, ActivityResultRequestCodes.EntryViewer.updateAccount)
                         }
                     }
                 }
@@ -186,6 +186,23 @@ class AccountViewer : AppCompatActivity() {
             resultData?.data?.also {
                 contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 saveVaultAs(it)
+            }
+        }
+
+        if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.EntryViewer.updateAccount) {
+            resultData?.run {
+                val updatedVaultAccount: VaultAccount = (getSerializableExtra("VaultAccount") as VaultAccount?) ?: run {
+                    Toast.makeText(this@AccountViewer, "Error! Received null as the updated vault account extra!", Toast.LENGTH_LONG).show()
+                    return@onActivityResult
+                }
+
+
+                val updatedVaultAccountIndex: Int = vaultAccountAdapter.getVaultAccountIndexByName(updatedVaultAccount.AccountName) ?: run {
+                    Toast.makeText(this@AccountViewer, "Error! The index of the updated account was null!", Toast.LENGTH_LONG).show()
+                    return@onActivityResult
+                }
+
+                vaultAccountAdapter.setVaultAccount(updatedVaultAccountIndex, updatedVaultAccount)
             }
         }
     }

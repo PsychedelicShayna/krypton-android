@@ -2,6 +2,7 @@ package com.psychedelicshayna.krypton
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.ContextMenu
@@ -16,6 +17,8 @@ import kotlinx.android.synthetic.main.activity_entry_viewer.*
 class EntryViewer : AppCompatActivity() {
     private lateinit var entryAdapter: EntryAdapter
     private lateinit var clipboardManager: ClipboardManager
+    private lateinit var receivedVaultAccount: VaultAccount
+
     private var latestContextMenuItemPressed: View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +27,7 @@ class EntryViewer : AppCompatActivity() {
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
-        val vaultAccount: VaultAccount = (intent.getSerializableExtra("VaultAccountObject") as VaultAccount?).let {
+        receivedVaultAccount = (intent.getSerializableExtra("VaultAccount") as VaultAccount?).let {
             if(it != null) { it } else {
                 Toast.makeText(this, "Received no vault account object!", Toast.LENGTH_LONG).show()
                 finish()
@@ -32,7 +35,7 @@ class EntryViewer : AppCompatActivity() {
             }
         }
 
-        entryAdapter = EntryAdapter(this, vaultAccount.AccountEntries).apply {
+        entryAdapter = EntryAdapter(this, receivedVaultAccount.AccountEntries).apply {
             onBindViewHolderListener = { holder, position ->
                 holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
                     onEntryAdapterItemViewContextMenuItemSelected(menuItem, position, contextMenu, view, contextMenuInfo)
@@ -40,7 +43,7 @@ class EntryViewer : AppCompatActivity() {
             }
         }
 
-        activityEntryViewerTextViewAccountName.text = vaultAccount.AccountName
+        activityEntryViewerTextViewAccountName.text = receivedVaultAccount.AccountName
 
         activityEntryViewerRecyclerViewEntries.layoutManager = LinearLayoutManager(this)
         activityEntryViewerRecyclerViewEntries.adapter = entryAdapter
@@ -240,6 +243,13 @@ class EntryViewer : AppCompatActivity() {
             }
 
             entryAdapter.setAccountEntry(position, Pair(entryName, entryValue))
+
+            setResult(ActivityResultRequestCodes.EntryViewer.updateAccount, Intent().apply {
+                putExtra("VaultAccount", receivedVaultAccount.apply {
+                    AccountEntries = entryAdapter.accountEntryPairs.associate { it }
+                })
+            })
+
             alertDialog.dismiss()
         }
 
@@ -297,6 +307,13 @@ class EntryViewer : AppCompatActivity() {
             }
 
             entryAdapter.addAccountEntry(entryName, entryValue)
+
+            setResult(RESULT_OK, Intent().apply {
+                putExtra("VaultAccount", receivedVaultAccount.apply {
+                    AccountEntries = entryAdapter.accountEntryPairs.associate { it }
+                })
+            })
+
             alertDialog.dismiss()
         }
 

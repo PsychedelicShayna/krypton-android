@@ -108,7 +108,25 @@ class VaultAccountAdapter(
         notifyBackBufferChange(vaultAccountIndex, BackBufferChangeType.CHANGED)
     }
 
+    fun setVaultAccountEntries(vaultAccountIndex: Int, newEntries: Map<String, String>) {
+        if(vaultAccountIndex >= vaultAccountsBackBuffer.size)
+            throw IndexOutOfBoundsException("vaultAccountIndex exceeds ${vaultAccountsBackBuffer.size}")
+
+        vaultAccountsBackBuffer[vaultAccountIndex].AccountEntries = newEntries
+    }
+
     fun getVaultAccounts(): Array<VaultAccount> = vaultAccountsBackBuffer.toTypedArray()
+
+    fun getVaultAccountIndexByName(accountName: String): Int? {
+        val foundVaultAccount: VaultAccount? = vaultAccountsBackBuffer.find { vaultAccount ->
+            vaultAccount.AccountName == accountName
+        }
+
+        return if(foundVaultAccount != null) vaultAccountsFrontBuffer.indexOf(foundVaultAccount)
+               else foundVaultAccount
+    }
+
+    fun getVaultAccountIndex(vaultAccount: VaultAccount): Int = vaultAccountsBackBuffer.indexOf(vaultAccount)
 
     fun addVaultAccount(vaultAccount: VaultAccount): Boolean {
         val duplicate: Boolean = vaultAccountsBackBuffer.any { element ->

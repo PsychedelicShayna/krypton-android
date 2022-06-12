@@ -40,7 +40,7 @@ class EntryAdapter(
     var onBindViewHolderListener:
             ((EntryItemViewHolder, Int) -> Unit)? = null
 
-    private val accountEntryPairs: MutableList<Pair<String, String>> =
+    val accountEntryPairs: MutableList<Pair<String, String>> =
         mutableListOf<Pair<String, String>>().apply {
             addAll(accountEntriesMap.map { entry ->
                 Pair(entry.key, entry.value)
@@ -75,6 +75,8 @@ class EntryAdapter(
 
     operator fun get(index: Int): Pair<String, String>? =
         if(index < accountEntryPairs.size) accountEntryPairs[index] else null
+
+    fun getEntriesMap(): Map<String, String> = accountEntryPairs.associate { it }
 
     fun hasEntryWithName(entryName: String): Boolean =
         accountEntryPairs.any { kvPair -> kvPair.first.contentEquals(entryName) }
