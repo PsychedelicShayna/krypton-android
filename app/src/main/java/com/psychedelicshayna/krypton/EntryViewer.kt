@@ -13,6 +13,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_entry_viewer.*
+import kotlinx.android.synthetic.main.dialog_entries_password_generator.view.*
 
 class EntryViewer : AppCompatActivity() {
     private lateinit var entryAdapter: EntryAdapter
@@ -92,66 +93,6 @@ class EntryViewer : AppCompatActivity() {
             null
         )
 
-        val buttonGeneratePassword: Button =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorButtonGenerate) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the generate button.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val buttonInsertToName: Button =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorButtonInsertName) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the insert to name button.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val buttonInsertToValue: Button =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorButtonInsertValue) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the insert to value button.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val editTextPasswordLength: EditText =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorEditTextLength) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the password length edit text.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val editTextGeneratedPassword: EditText =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorEditTextPassword) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the password length edit text.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val checkBoxUpper: CheckBox =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorCheckBoxUpper) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the uppercase checkbox.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val checkBoxLower: CheckBox =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorCheckBoxLower) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the lowercase checkbox.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val checkBoxNumerical: CheckBox =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorCheckBoxNumeric) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the numerical checkbox.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val checkBoxSpecial: CheckBox =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorCheckBoxSpecial) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the special characters checkbox.", Toast.LENGTH_LONG).show()
-                return
-            }
-
-        val checkBoxExtra: CheckBox =
-            dialogEntriesPasswordGenerator.findViewById(R.id.dialogEntriesPasswordGeneratorCheckBoxExtra) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the extra characters checkbox.", Toast.LENGTH_LONG).show()
-                return
-            }
-
         val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this).apply {
             setView(dialogEntriesPasswordGenerator)
             setCancelable(true)
@@ -162,29 +103,40 @@ class EntryViewer : AppCompatActivity() {
         val alertDialog: AlertDialog = alertDialogBuilder.create()
         alertDialog.show()
 
-        buttonGeneratePassword.setOnClickListener {
-            val passwordGenerator = PasswordGenerator()
+        dialogEntriesPasswordGenerator.run {
+            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonGenerate)?.setOnClickListener {
+                val passwordGenerator = PasswordGenerator()
 
-            val characterClassSpec: PasswordGenerator.CharacterClassSpec = PasswordGenerator.CharacterClassSpec().apply {
-                uppercase.enabled = checkBoxUpper.isChecked
-                lowercase.enabled = checkBoxLower.isChecked
-                numerical.enabled = checkBoxNumerical.isChecked
-                special.enabled   = checkBoxSpecial.isChecked
-                extra.enabled     = checkBoxExtra.isChecked
+                val characterClassSpec: PasswordGenerator.CharacterClassSpec = PasswordGenerator.CharacterClassSpec().apply {
+                    uppercase.enabled = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxUpper)   ?.isChecked ?: false
+                    lowercase.enabled = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxLower)   ?.isChecked ?: false
+                    numerical.enabled = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxNumeric) ?.isChecked ?: false
+                    special.enabled   = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxSpecial) ?.isChecked ?: false
+                    extra.enabled     = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxExtra)   ?.isChecked ?: false
+                }
+
+                val passwordLength: Int = findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextLength)?.run {
+                    if(length() > 0) text.toString().toInt()
+                    else 0
+                } ?: 0
+
+                if(passwordLength > 0) {
+                    val generatedPassword: String = passwordGenerator.generatePassword(passwordLength, characterClassSpec)
+                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)?.setText(generatedPassword)
+                }
             }
 
-            val passwordLength: Int = editTextPasswordLength.text.toString().toInt()
-            val generatedPassword: String = passwordGenerator.generatePassword(passwordLength, characterClassSpec)
+            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertName)?.setOnClickListener {
+                findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)?.run {
+                    insertToNameCallback.invoke(alertDialog, text.toString())
+                }
+            }
 
-            editTextGeneratedPassword.setText(generatedPassword)
-        }
-
-        buttonInsertToName.setOnClickListener {
-            insertToNameCallback.invoke(alertDialog, editTextGeneratedPassword.text.toString())
-        }
-
-        buttonInsertToValue.setOnClickListener {
-            insertToValueCallback.invoke(alertDialog, editTextGeneratedPassword.text.toString())
+            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertValue)?.setOnClickListener {
+                findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)?.run {
+                    insertToValueCallback.invoke(alertDialog, text.toString())
+                }
+            }
         }
     }
 
