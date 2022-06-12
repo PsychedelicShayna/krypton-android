@@ -17,4 +17,8 @@
         android:title="Edit Entry"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/menuEntryViewerEntryContextMenuItemRemove"
+        android:title="Remove Entry"
+        app:showAsAction="never"/>
 </menu>

@@ -62,21 +62,20 @@ class EntryViewer : AppCompatActivity() {
                 clipboardManager.setPrimaryClip(
                     ClipData.newPlainText("entryName", selectedEntryPair.first)
                 )
-
-                return
             }
 
             R.id.menuEntryViewerEntryContextMenuItemCopyEntryValue -> {
                 clipboardManager.setPrimaryClip(
                     ClipData.newPlainText("entryValue", selectedEntryPair.second)
                 )
-
-                return
             }
 
             R.id.menuEntryViewerEntryContextMenuItemEdit -> {
                 editEntry(position)
-                return
+            }
+
+            R.id.menuEntryViewerEntryContextMenuItemRemove -> {
+                entryAdapter.removeAccountEntry(position)
             }
         }
     }
