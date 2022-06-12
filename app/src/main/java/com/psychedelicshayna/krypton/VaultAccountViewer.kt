@@ -115,7 +115,7 @@ class VaultAccountViewer : AppCompatActivity() {
             }
 
             R.id.accountViewerContextMenuItemEditAccountName -> {
-                TODO("Not implemented")
+                editAccountName(position)
             }
 
             R.id.accountViewerContextMenuItemRemoveAccount -> {
@@ -340,7 +340,7 @@ class VaultAccountViewer : AppCompatActivity() {
         )
 
         val etAccountName: EditText =
-            dialogNewAccountView.findViewById<EditText>(R.id.dialogNewAccountEditTextAccountName)
+            dialogNewAccountView.findViewById<EditText>(R.id.dialogInputAccountNameEditTextAccountName)
 
         val alertDialogBuilder = AlertDialog.Builder(this).apply {
             setView(dialogNewAccountView)
@@ -368,6 +368,53 @@ class VaultAccountViewer : AppCompatActivity() {
             }
 
             vaultAccountAdapter.addVaultAccount(VaultAccount(accountName))
+            alertDialog.dismiss()
+        }
+    }
+
+    private fun editAccountName(position: Int) {
+        val dialogAccountNameInput: View = LayoutInflater.from(this).inflate(
+            R.layout.dialog_input_account_name,
+            null
+        )
+
+        val vaultAccount: VaultAccount = vaultAccountAdapter.itemAtFrontBuffer(position) ?: return
+
+        val editTextAccountName: EditText = dialogAccountNameInput.findViewById(R.id.dialogInputAccountNameEditTextAccountName)
+
+        editTextAccountName.setText(vaultAccount.AccountName)
+
+        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this).apply {
+            setView(dialogAccountNameInput)
+            setCancelable(true)
+            setTitle("Enter New Account Name")
+
+            setPositiveButton("Okay") { _, _ -> }
+            setNegativeButton("Cancel") { _, _ -> }
+        }
+
+        val alertDialog: AlertDialog = alertDialogBuilder.create()
+        alertDialog.show()
+
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val newAccountName: String = editTextAccountName.text.toString()
+
+            if(newAccountName.isBlank()) {
+                Toast.makeText(this, "Enter an account name first. Name cannot be blank.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            if(vaultAccountAdapter.hasAccountWithName(newAccountName)) {
+                Toast.makeText(this, "An account with that name already exists!", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            val backBufferPosition: Int = vaultAccountAdapter.getBackBufferIndexFromFrontBuffer(position) ?: return@setOnClickListener
+
+            vaultAccountAdapter.setVaultAccount(backBufferPosition, vaultAccount.apply {
+                AccountName = newAccountName
+            })
+
             alertDialog.dismiss()
         }
     }

@@ -194,10 +194,10 @@ class VaultAccountAdapter(
     fun clearAccountNameSearch() {
         accountNameSearchQuery = ""
 
-        vaultAccountFrontBuffer.size.also {
-            vaultAccountFrontBuffer.clear()
-            notifyItemRangeRemoved(0, it)
-        }
+        val vaultAccountFrontBufferSizeCopy: Int = vaultAccountFrontBuffer.size
+
+        vaultAccountFrontBuffer.clear()
+        notifyItemRangeRemoved(0, vaultAccountFrontBufferSizeCopy)
 
         vaultAccountFrontBuffer.addAll(vaultAccountBackBuffer)
         notifyItemRangeInserted(0, vaultAccountFrontBuffer.size)
