@@ -523,15 +523,15 @@ class VaultAccountViewer : AppCompatActivity() {
             }
         }
 
-        val vaultDataHash: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
-
-        contentResolver.openFileDescriptor(vaultFileUri, "w")?.let { parcelFileDescriptor ->
+        contentResolver.openFileDescriptor(vaultFileUri, "wt")?.let { parcelFileDescriptor ->
             FileOutputStream(parcelFileDescriptor.fileDescriptor).use { fileOutputStream ->
+                fileOutputStream.flush()
                 fileOutputStream.write(vaultData)
+                fileOutputStream.close()
             }
         }
 
-        val vaultDataWritten: ByteArray = contentResolver.openFileDescriptor(vaultFileUri, "rw")?.let { parcelFileDescriptor ->
+        val vaultDataWritten: ByteArray = contentResolver.openFileDescriptor(vaultFileUri, "r")?.let { parcelFileDescriptor ->
             FileInputStream(parcelFileDescriptor.fileDescriptor).let { fileInputStream ->
                 val data = fileInputStream.readBytes()
                 fileInputStream.close()
