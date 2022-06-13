@@ -1,8 +1,10 @@
 package com.psychedelicshayna.krypton
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -14,14 +16,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
 
     private var loadVaultFileUri: Uri? = null
-    private val loadVaultActivityResultRequestCode: Int = 1
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
 
-        if(resultCode == RESULT_OK && requestCode == loadVaultActivityResultRequestCode) {
+        if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.MainActivity.loadVaultFile) {
             resultData?.data?.also {
-                contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                                                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+
                 loadVaultFileUri = it
                 loadVault()
             }
@@ -32,11 +35,15 @@ class MainActivity : AppCompatActivity() {
         if(loadVaultFileUri == null) {
             val openFileIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
-                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+
                 type = "*/*"
             }
 
-            startActivityForResult(openFileIntent, loadVaultActivityResultRequestCode)
+            startActivityForResult(openFileIntent, ActivityResultRequestCodes.MainActivity.loadVaultFile)
         } else {
             Intent(this, VaultAccountViewer::class.java).apply {
                 putExtra("VaultFileUri", loadVaultFileUri.toString())
@@ -63,6 +70,11 @@ class MainActivity : AppCompatActivity() {
     private fun newVault() {
         val newVaultIntent = Intent(this, VaultAccountViewer::class.java)
         startActivity(newVaultIntent)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        setContentView(R.layout.activity_main_layout)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -3,6 +3,7 @@ package com.psychedelicshayna.krypton
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
@@ -102,6 +103,11 @@ class VaultAccountViewer : AppCompatActivity() {
         })
 
         if(activeVaultFileUri != null) loadVaultFile(activeVaultFileUri!!)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        setContentView(R.layout.activity_vault_account_viewer)
     }
 
     private fun onAccountAdapterItemViewContextMenuItemSelected(menuItem: MenuItem, position: Int, contextMenu: ContextMenu?, view: View?, contextMenuInfo: ContextMenu.ContextMenuInfo?) {
