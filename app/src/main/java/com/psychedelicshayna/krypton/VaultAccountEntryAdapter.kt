@@ -18,9 +18,13 @@ class VaultAccountEntryAdapter(
         val parentContext: Context,
         val representedItemView: View
     ) : RecyclerView.ViewHolder(representedItemView) {
-        var onContextMenuItemClickListener: ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
 
-        private fun onCreateContextMenuListener(menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
+        var onContextMenuItemClickListener:
+                ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
+
+        private fun onCreateContextMenuListener
+                    (menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
+
             menu?.let { contextMenu ->
                 MenuInflater(parentContext).inflate(R.menu.menu_entry_viewer_entry_context_menu, contextMenu)
 

@@ -16,23 +16,26 @@ import kotlinx.android.synthetic.main.activity_vault_account_entry_viewer.*
 class VaultAccountEntryViewer : AppCompatActivity() {
     private lateinit var vaultAccountEntryAdapter: VaultAccountEntryAdapter
     private lateinit var clipboardManager: ClipboardManager
-    private lateinit var receivedVaultAccount: VaultAccount
+    private lateinit var viewingVaultAccount: Vault.Account
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_vault_account_entry_viewer)
 
-        clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        viewingVaultAccount = (intent.getSerializableExtra("VaultAccount") as Vault.Account?) ?: run {
 
-        receivedVaultAccount = (intent.getSerializableExtra("VaultAccount") as VaultAccount?) ?: run {
-            Toast.makeText(this, "Error! VaultAccountEntryViewer received no \"VaultAccount\" extra!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Error! Vault.AccountEntryViewer received no" +
+                    " \"VaultAccount\" extra!", Toast.LENGTH_LONG).show()
+
             finish()
 
             return@onCreate
         }
 
-        vaultAccountEntryAdapter = VaultAccountEntryAdapter(this, receivedVaultAccount.AccountEntries)
+        clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+
+        vaultAccountEntryAdapter = VaultAccountEntryAdapter(this, viewingVaultAccount.entries)
 
         vaultAccountEntryAdapter.onBindViewHolderListener = { holder, _ ->
             holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
@@ -40,12 +43,12 @@ class VaultAccountEntryViewer : AppCompatActivity() {
             }
         }
 
-        activityEntryViewerTextViewAccountName.text = receivedVaultAccount.AccountName
-
         activityEntryViewerRecyclerViewEntries.layoutManager = LinearLayoutManager(this)
         activityEntryViewerRecyclerViewEntries.adapter = vaultAccountEntryAdapter
 
-        findViewById<Button>(R.id.activityEntryViewerButtonAddEntry).setOnClickListener { addEntry() }
+        activityEntryViewerTextViewAccountName.text = viewingVaultAccount.name
+
+        findViewById<Button>(R.id.activityEntryViewerButtonAddEntry).setOnClickListener(::addEntry)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -80,8 +83,8 @@ class VaultAccountEntryViewer : AppCompatActivity() {
                 vaultAccountEntryAdapter.removeAccountEntry(position)
 
                 setResult(RESULT_OK, Intent().apply {
-                    putExtra("VaultAccount", receivedVaultAccount.apply {
-                        AccountEntries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }
+                    putExtra("VaultAccount", viewingVaultAccount.apply {
+                        entries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }.toMutableMap()
                     })
                 })
             }
@@ -153,22 +156,13 @@ class VaultAccountEntryViewer : AppCompatActivity() {
         )
 
         val editTextEntryName: EditText =
-            dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputEditTextEntryName) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the entry name EditText!", Toast.LENGTH_SHORT).show()
-                return@editEntry
-            }
+            dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputEditTextEntryName)
 
         val editTextEntryValue: EditText =
-            dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputEditTextEntryValue) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the entry value EditText!", Toast.LENGTH_SHORT).show()
-                return@editEntry
-            }
+            dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputEditTextEntryValue)
 
         val buttonPasswordGenerator: Button =
-            dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputButtonPasswordGenerator) ?: run {
-                Toast.makeText(this, "Error! Could not find the view for the password generator button!", Toast.LENGTH_SHORT).show()
-                return@editEntry
-            }
+            dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputButtonPasswordGenerator)
 
         editTextEntryName.setText(entry.first)
         editTextEntryValue.setText(entry.second)
@@ -203,8 +197,8 @@ class VaultAccountEntryViewer : AppCompatActivity() {
             vaultAccountEntryAdapter.setAccountEntry(position, Pair(entryName, entryValue))
 
             setResult(RESULT_OK, Intent().apply {
-                putExtra("VaultAccount", receivedVaultAccount.apply {
-                    AccountEntries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }
+                putExtra("VaultAccount", viewingVaultAccount.apply {
+                    entries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }.toMutableMap()
                 })
             })
 
@@ -222,7 +216,7 @@ class VaultAccountEntryViewer : AppCompatActivity() {
         }
     }
 
-    private fun addEntry() {
+    private fun addEntry(view: View?) {
         val dialogEntryValuesInput: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_input_account_entry_values,
             null
@@ -267,8 +261,8 @@ class VaultAccountEntryViewer : AppCompatActivity() {
             vaultAccountEntryAdapter.addAccountEntry(entryName, entryValue)
 
             setResult(RESULT_OK, Intent().apply {
-                putExtra("VaultAccount", receivedVaultAccount.apply {
-                    AccountEntries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }
+                putExtra("VaultAccount", viewingVaultAccount.apply {
+                    entries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }.toMutableMap()
                 })
             })
 

@@ -1,6 +1,5 @@
 package com.psychedelicshayna.krypton
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -45,7 +44,7 @@ class MainActivity : AppCompatActivity() {
 
             startActivityForResult(openFileIntent, ActivityResultRequestCodes.MainActivity.loadVaultFile)
         } else {
-            Intent(this, VaultAccountViewer::class.java).apply {
+            Intent(this, VaultViewer::class.java).apply {
                 putExtra("VaultFileUri", loadVaultFileUri.toString())
                 startActivity(this)
             }
@@ -68,7 +67,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newVault() {
-        val newVaultIntent = Intent(this, VaultAccountViewer::class.java)
+        val newVaultIntent = Intent(this, VaultViewer::class.java)
         startActivity(newVaultIntent)
     }
 

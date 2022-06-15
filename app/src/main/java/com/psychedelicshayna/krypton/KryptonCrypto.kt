@@ -8,14 +8,24 @@ import java.security.InvalidParameterException
 import java.security.MessageDigest
 import java.security.SecureRandom
 
-import org.signal.argon2.*
+import org.signal.argon2.Argon2
+import org.signal.argon2.MemoryCost
+import org.signal.argon2.Type
+import org.signal.argon2.Version
 
-class VaultSecurity {
+class KryptonCrypto {
+    object CryptoConstants {
+        const val aesBlockSize: Int = 16
+
+        const val argon2MemoryCostMiB: Int = 32
+        const val argon2Parallelism: Int = 4
+        const val argon2Iterations: Int = 16
+        const val argon2HashLength: Int = 32
+    }
+
     private val secureRandom = SecureRandom()
 
-    val aesBlockSize: Int = 16
-
-    private var ivMaskLength: Int = aesBlockSize
+    private var ivMaskLength: Int = CryptoConstants.aesBlockSize
     private var derivedAesCipherKey: Argon2.Result? = null
     private var passwordSha256: ByteArray? = null
 
@@ -53,9 +63,8 @@ class VaultSecurity {
         val sha512: MessageDigest = MessageDigest.getInstance("SHA-512")
         var digest: ByteArray = data
 
-        for(i in 1..iterations) {
+        for(i in 1..iterations)
             digest = sha512.digest(digest)
-        }
 
         return digest
     }
@@ -63,10 +72,10 @@ class VaultSecurity {
     private fun deriveAesCipherKey(password: String): Argon2.Result {
         val argon2: Argon2 = Argon2.Builder(Version.V13).let {
             it.type(Type.Argon2id)
-            it.memoryCost(MemoryCost.MiB(32))
-            it.parallelism(4)
-            it.iterations(16)
-            it.hashLength(32)
+            it.memoryCost(MemoryCost.MiB(CryptoConstants.argon2MemoryCostMiB))
+            it.parallelism(CryptoConstants.argon2Parallelism)
+            it.iterations(CryptoConstants.argon2Iterations)
+            it.hashLength(CryptoConstants.argon2HashLength)
             it.build()
         }
 
@@ -81,20 +90,20 @@ class VaultSecurity {
             init(
                 cipherMode,
                 SecretKeySpec(derivedAesCipherKey!!.hash, "AES"),
-                IvParameterSpec(ByteArray(aesBlockSize).apply {
+                IvParameterSpec(ByteArray(CryptoConstants.aesBlockSize).apply {
                     secureRandom.nextBytes(this)
                 })
             )
         }
     }
 
-    fun decryptVault(decryptionInput:ByteArray): ByteArray {
+    fun decrypt(decryptionInput:ByteArray): ByteArray {
         return stripPkcs7Padding(setupAesCipherObject(Cipher.DECRYPT_MODE).doFinal(decryptionInput)).let {
             it.copyOfRange(ivMaskLength, it.size)
         }
     }
 
-    fun encryptVault(encryptionInput: ByteArray): ByteArray {
+    fun encrypt(encryptionInput: ByteArray): ByteArray {
         return ByteArray(ivMaskLength).apply {
             secureRandom.nextBytes(this)
         }.toMutableList().apply {
@@ -105,9 +114,9 @@ class VaultSecurity {
     }
 
     fun setCryptoParameters(password: String, ivMaskLength: Int = 16) {
-        if(ivMaskLength < aesBlockSize) {
+        if(ivMaskLength < CryptoConstants.aesBlockSize) {
             throw InvalidParameterException(
-                "The provided IV mask length is smaller than the AES block size of $aesBlockSize bytes!")
+                "The provided IV mask length is smaller than the AES block size of ${CryptoConstants.aesBlockSize} bytes!")
         }
 
         derivedAesCipherKey = deriveAesCipherKey(password)

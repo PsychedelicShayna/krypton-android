@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.ContextMenu
 import android.view.LayoutInflater
@@ -14,26 +13,27 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_vault_account_viewer.*
-import org.json.*
-import java.nio.charset.StandardCharsets
 import org.apache.commons.io.IOUtils
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import java.lang.Exception
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
 
-class VaultAccountViewer : AppCompatActivity() {
+class VaultViewer : AppCompatActivity() {
     private lateinit var clipboardManager: ClipboardManager
-    private lateinit var vaultAccountAdapter: VaultAccountAdapter
 
-    private val backupOfVaultAccounts: MutableList<VaultAccount> = mutableListOf()
+    private lateinit var vaultAdapter: VaultAdapter
+    private var vaultBackup: Vault = Vault()
 
-    private val vaultSecurity: VaultSecurity = VaultSecurity()
+    private val kryptonCrypto: KryptonCrypto = KryptonCrypto()
     private var vaultEncryptionEnabled: Boolean = false
 
     private var activeVaultFileUri: Uri? = null
@@ -44,15 +44,15 @@ class VaultAccountViewer : AppCompatActivity() {
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
-        vaultAccountAdapter = VaultAccountAdapter(this, mutableListOf())
+        vaultAdapter = VaultAdapter(this, Vault())
 
-        vaultAccountAdapter.onBindViewHolderListener = { holder, position ->
+        vaultAdapter.onBindViewHolderListener = { holder, position ->
             holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
                 onAccountAdapterItemViewContextMenuItemSelected(menuItem, position, contextMenu, view, contextMenuInfo)
             }
 
-            holder.itemView.setOnClickListener { itemView: View ->
-                val clickedVaultAccount: VaultAccount? = vaultAccountAdapter.itemAtFrontBuffer(position)
+            holder.itemView.setOnClickListener {
+                val clickedVaultAccount: Vault.Account? = vaultAdapter.getDisplayVaultAccount(position)
 
                 val openEntryViewerIntent = Intent(
                     this,
@@ -68,8 +68,8 @@ class VaultAccountViewer : AppCompatActivity() {
         activeVaultFileUri = intent.getStringExtra("VaultFileUri")?.let { Uri.parse(it) }
 
         findViewById<RecyclerView>(R.id.activityAccountViewerRecyclerViewVaultAccounts).apply {
-            layoutManager = LinearLayoutManager(this@VaultAccountViewer)
-            adapter = vaultAccountAdapter
+            layoutManager = LinearLayoutManager(this@VaultViewer)
+            adapter = vaultAdapter
         }
 
         activityAccountViewerButtonAddAccount.setOnClickListener(::addAccount)
@@ -78,7 +78,7 @@ class VaultAccountViewer : AppCompatActivity() {
         activityAccountViewerButtonSaveAs.setOnClickListener        { saveVaultAs() }
 
         activityAccountViewerButtonRevertChanges.setOnClickListener {
-            vaultAccountAdapter.setVaultAccounts(backupOfVaultAccounts.toTypedArray())
+            vaultAdapter.setVault(vaultBackup)
         }
 
         activityAccountViewerButtonDiff.setOnClickListener          { diffVault() }
@@ -93,9 +93,9 @@ class VaultAccountViewer : AppCompatActivity() {
                 if(text == null) return false
 
                 if(text.isEmpty()) {
-                    vaultAccountAdapter.clearAccountNameSearch()
+                    vaultAdapter.clearAccountNameSearchQuery()
                 } else {
-                    vaultAccountAdapter.searchAccountNames(text)
+                    vaultAdapter.performAccountNameSearchQuery(text)
                 }
 
                 return true
@@ -105,18 +105,78 @@ class VaultAccountViewer : AppCompatActivity() {
         if(activeVaultFileUri != null) loadVaultFile(activeVaultFileUri!!)
     }
 
+    override fun onBackPressed() {
+        if(unsavedChanges()) {
+            val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this).apply {
+                setCancelable(false)
+                title = "Unsaved Changes"
+                setMessage("You have unsaved changes, are you sure you want to exit?")
+
+                setPositiveButton("Yes") { _, _ ->
+                    super.onBackPressed()
+                }
+
+                setNegativeButton("Cancel") { _, _ -> }
+            }
+
+            alertDialogBuilder.create().show()
+        } else {
+            super.onBackPressed()
+        }
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         setContentView(R.layout.activity_vault_account_viewer)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+
+        if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.AccountViewer.saveVaultAs) {
+            resultData?.data?.also {
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+
+                saveVaultAs(it)
+            }
+        }
+
+        if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.EntryViewer.updateAccount) {
+            resultData?.run {
+                val updatedVaultAccount: Vault.Account =
+                    (getSerializableExtra("VaultAccount") as Vault.Account?) ?: run {
+
+                        Toast.makeText(this@VaultViewer, "Error! Received null as the " +
+                                "updated vault account extra!", Toast.LENGTH_LONG).show()
+
+                        return@onActivityResult
+                }
+
+
+                val updatedVaultAccountIndex: Int =
+                    vaultAdapter.getVaultAccountIndexByName(updatedVaultAccount.name) ?: run {
+                        Toast.makeText(this@VaultViewer, "Error! The index of the updated " +
+                                "account was null!", Toast.LENGTH_LONG).show()
+
+                        return@onActivityResult
+                }
+
+                vaultAdapter.setVaultAccount(updatedVaultAccountIndex, updatedVaultAccount)
+            }
+        }
+    }
+
     private fun onAccountAdapterItemViewContextMenuItemSelected(menuItem: MenuItem, position: Int, contextMenu: ContextMenu?, view: View?, contextMenuInfo: ContextMenu.ContextMenuInfo?) {
-        val selectedVaultAccount: VaultAccount = vaultAccountAdapter.itemAtBackBuffer(position) ?: return
+        val selectedVaultAccount: Vault.Account = vaultAdapter.getStorageVaultAccount(position) ?: return
 
         when(menuItem.itemId) {
             R.id.accountViewerContextMenuItemCopyAccountName -> {
                 clipboardManager.setPrimaryClip(
-                    ClipData.newPlainText("accountName", selectedVaultAccount.AccountName)
+                    ClipData.newPlainText("accountName", selectedVaultAccount.name)
                 )
             }
 
@@ -125,37 +185,9 @@ class VaultAccountViewer : AppCompatActivity() {
             }
 
             R.id.accountViewerContextMenuItemRemoveAccount -> {
-                vaultAccountAdapter.getBackBufferIndexFromFrontBuffer(position)?.also {
-                    vaultAccountAdapter.removeVaultAccount(it)
+                vaultAdapter.getVaultAccountIndexFromDisplayVaultAccountIndex(position)?.also {
+                    vaultAdapter.removeVaultAccount(it)
                 }
-            }
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
-        super.onActivityResult(requestCode, resultCode, resultData)
-
-        if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.AccountViewer.saveVaultAs) {
-            resultData?.data?.also {
-                contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                saveVaultAs(it)
-            }
-        }
-
-        if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.EntryViewer.updateAccount) {
-            resultData?.run {
-                val updatedVaultAccount: VaultAccount = (getSerializableExtra("VaultAccount") as VaultAccount?) ?: run {
-                    Toast.makeText(this@VaultAccountViewer, "Error! Received null as the updated vault account extra!", Toast.LENGTH_LONG).show()
-                    return@onActivityResult
-                }
-
-
-                val updatedVaultAccountIndex: Int = vaultAccountAdapter.getVaultAccountIndexByName(updatedVaultAccount.AccountName) ?: run {
-                    Toast.makeText(this@VaultAccountViewer, "Error! The index of the updated account was null!", Toast.LENGTH_LONG).show()
-                    return@onActivityResult
-                }
-
-                vaultAccountAdapter.setVaultAccount(updatedVaultAccountIndex, updatedVaultAccount)
             }
         }
     }
@@ -183,7 +215,8 @@ class VaultAccountViewer : AppCompatActivity() {
                 setPositiveButton("Encrypt") { _, _ -> }
 
                 setNeutralButton("Cancel")   { _, _ ->
-                    Toast.makeText(this@VaultAccountViewer, "Vault wasn't saved, password wasn't provided!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@VaultViewer, "Vault wasn't saved, password " +
+                            "wasn't provided!", Toast.LENGTH_LONG).show()
                 }
             }
 
@@ -193,16 +226,35 @@ class VaultAccountViewer : AppCompatActivity() {
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val etPassword: EditText = vaultCredentialsPromptView.findViewById(R.id.etPassword)
 
-                if(vaultSecurity.verifyPassword(etPassword.text.toString())) {
+                if(kryptonCrypto.verifyPassword(etPassword.text.toString())) {
                     alertDialog.dismiss()
                     saveVault()
                 } else {
-                    Toast.makeText(this, "The password doesn't match the password used to load the vault!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "The password doesn't match the password " +
+                            "used to load the vault!", Toast.LENGTH_LONG).show()
                 }
             }
         } else {
             saveVault()
         }
+    }
+
+    private fun unsavedChanges(): Boolean {
+        val latestChanges: Vault = vaultAdapter.getVault()
+        val savedChanges: Vault = vaultBackup
+
+        var unsavedChanges = latestChanges.accounts.size != savedChanges.accounts.size
+
+        if(!unsavedChanges) {
+            for(index in 0 until latestChanges.accounts.size - 1) {
+                if(!latestChanges.accounts[index].contentEquals(savedChanges.accounts[index])) {
+                    unsavedChanges = true
+                    break
+                }
+            }
+        }
+
+        return unsavedChanges
     }
 
     private fun diffVault() {
@@ -231,46 +283,46 @@ class VaultAccountViewer : AppCompatActivity() {
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
 
-        val newVaultAccounts: Array<VaultAccount> = vaultAccountAdapter.getVaultAccounts()
-        val oldVaultAccounts: Array<VaultAccount> = backupOfVaultAccounts.toTypedArray()
+        val newVaultAccounts: MutableList<Vault.Account> = vaultAdapter.getVault().accounts
+        val oldVaultAccounts: MutableList<Vault.Account> = vaultBackup.accounts
 
-        for (newAccount: VaultAccount in newVaultAccounts) {
-            val oldAccount: VaultAccount? = oldVaultAccounts.find { vaultAccount ->
-                vaultAccount.contentEquals(newAccount)
+        for(newAccount: Vault.Account in newVaultAccounts) {
+            val oldAccount: Vault.Account? = oldVaultAccounts.find { vaultAccount ->
+                vaultAccount.name == newAccount.name
             }
 
             if(oldAccount == null) {
-                entriesAdded.add("+ %s".format(newAccount.AccountName))
+                entriesAdded.add("+ %s".format(newAccount.name))
 
-                for(entry: Map.Entry<String, String> in newAccount.AccountEntries) {
-                    entriesAdded.add("+ %s/%s".format(newAccount.AccountName, entry.key))
+                for(entry: Map.Entry<String, String> in newAccount.entries) {
+                    entriesAdded.add("+ %s/%s".format(newAccount.name, entry.key))
                 }
-            } else {
-                for(entry: Map.Entry<String, String> in newAccount.AccountEntries) {
-                    if(!oldAccount.AccountEntries.containsKey(entry.key)) {
-                        entriesAdded.add("+ %s/%s".format(newAccount.AccountName, entry.key))
-                    } else if(oldAccount.AccountEntries[entry.key] != entry.value) {
-                        entriesChanged.add("~ %s/%s".format(newAccount.AccountName, entry.key))
+            } else if(!newAccount.contentEquals(oldAccount)) {
+                for(entry: Map.Entry<String, String> in newAccount.entries) {
+                    if(!oldAccount.entries.containsKey(entry.key)) {
+                        entriesAdded.add("+ %s/%s".format(newAccount.name, entry.key))
+                    } else if(oldAccount.entries[entry.key] != entry.value) {
+                        entriesChanged.add("~ %s/%s".format(newAccount.name, entry.key))
                     }
                 }
             }
         }
 
-        for (oldAccount: VaultAccount in oldVaultAccounts) {
-            val newAccount: VaultAccount? = newVaultAccounts.find { vaultAccount ->
-                vaultAccount.contentEquals(oldAccount)
+        for(oldAccount: Vault.Account in oldVaultAccounts) {
+            val newAccount: Vault.Account? = newVaultAccounts.find { vaultAccount ->
+                vaultAccount.name == oldAccount.name
             }
 
             if(newAccount == null) {
-                entriesRemoved.add("- %s".format(oldAccount.AccountName))
+                entriesRemoved.add("- %s".format(oldAccount.name))
 
-                for(entry: Map.Entry<String, String> in oldAccount.AccountEntries) {
-                    entriesRemoved.add("- %s/%s".format(oldAccount.AccountName, entry.key))
+                for(entry: Map.Entry<String, String> in oldAccount.entries) {
+                    entriesRemoved.add("- %s/%s".format(oldAccount.name, entry.key))
                 }
-            } else {
-                for(entry: Map.Entry<String, String> in oldAccount.AccountEntries) {
-                    if(!newAccount.AccountEntries.containsKey(entry.key)) {
-                        entriesRemoved.add("- %s/%s".format(oldAccount.AccountName, entry.key))
+            } else if(!oldAccount.contentEquals(newAccount)) {
+                for(entry: Map.Entry<String, String> in oldAccount.entries) {
+                    if(!newAccount.entries.containsKey(entry.key)) {
+                        entriesRemoved.add("- %s/%s".format(oldAccount.name, entry.key))
                     }
                 }
             }
@@ -319,11 +371,15 @@ class VaultAccountViewer : AppCompatActivity() {
             val confirmationPassword: String = editTextSecurityDialogConfirmPassword.text.toString()
 
             if(password.isEmpty() || confirmationPassword.isEmpty()) {
-                Toast.makeText(this, "Supply a password first; populate both password fields.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Supply a password first; populate " +
+                        "both password fields.", Toast.LENGTH_LONG).show()
+
             } else if(!password.contentEquals(confirmationPassword)) {
-                Toast.makeText(this, "The confirmation password doesn't match the original password!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "The confirmation password doesn't " +
+                        "match the original password!", Toast.LENGTH_LONG).show()
+
             } else {
-                vaultSecurity.setCryptoParameters(password)
+                kryptonCrypto.setCryptoParameters(password)
                 vaultEncryptionEnabled = true
                 Toast.makeText(this, "Encryption key set successfully.", Toast.LENGTH_SHORT).show()
                 alertDialog.dismiss()
@@ -368,12 +424,12 @@ class VaultAccountViewer : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if(vaultAccountAdapter.hasAccountWithName(accountName)) {
+            if(vaultAdapter.hasAccountWithName(accountName)) {
                 Toast.makeText(this, "An account with that name already exists!", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
-            vaultAccountAdapter.addVaultAccount(VaultAccount(accountName))
+            vaultAdapter.addVaultAccount(Vault.Account(accountName))
             alertDialog.dismiss()
         }
     }
@@ -384,11 +440,12 @@ class VaultAccountViewer : AppCompatActivity() {
             null
         )
 
-        val vaultAccount: VaultAccount = vaultAccountAdapter.itemAtFrontBuffer(position) ?: return
+        val vaultAccount: Vault.Account = vaultAdapter.getDisplayVaultAccount(position) ?: return
 
-        val editTextAccountName: EditText = dialogAccountNameInput.findViewById(R.id.dialogInputAccountNameEditTextAccountName)
+        val editTextAccountName: EditText =
+            dialogAccountNameInput.findViewById(R.id.dialogInputAccountNameEditTextAccountName)
 
-        editTextAccountName.setText(vaultAccount.AccountName)
+        editTextAccountName.setText(vaultAccount.name)
 
         val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this).apply {
             setView(dialogAccountNameInput)
@@ -410,60 +467,61 @@ class VaultAccountViewer : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if(vaultAccountAdapter.hasAccountWithName(newAccountName)) {
+            if(vaultAdapter.hasAccountWithName(newAccountName)) {
                 Toast.makeText(this, "An account with that name already exists!", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
-            val backBufferPosition: Int = vaultAccountAdapter.getBackBufferIndexFromFrontBuffer(position) ?: return@setOnClickListener
+            val backBufferPosition: Int =
+                vaultAdapter.getVaultAccountIndexFromDisplayVaultAccountIndex(position) ?: return@setOnClickListener
 
-            vaultAccountAdapter.setVaultAccount(backBufferPosition, vaultAccount.apply {
-                AccountName = newAccountName
+            vaultAdapter.setVaultAccount(backBufferPosition, vaultAccount.apply {
+                name = newAccountName
             })
 
             alertDialog.dismiss()
         }
     }
 
-    private fun dumpVaultJson(): JSONObject {
-        return JSONObject().apply {
-            for(vaultAccount in vaultAccountAdapter.getVaultAccounts()) {
-                this.put(vaultAccount.AccountName, JSONObject().apply {
-                    for(accountEntry in vaultAccount.AccountEntries) {
-                        put(accountEntry.key, accountEntry.value)
-                    }
-                })
-            }
-        }
-    }
-
-    private fun loadVaultJson(vaultDataJson: JSONObject): Boolean {
-        vaultAccountAdapter.clearVaultAccounts()
-
-        try {
-            for(accountName in vaultDataJson.keys()) {
-                val accountEntriesMap: MutableMap<String, String> = mutableMapOf()
-                val accountEntries: JSONObject = vaultDataJson.getJSONObject(accountName)
-
-                for(accountEntry: String in accountEntries.keys()) {
-                    accountEntriesMap[accountEntry] = accountEntries.getString(accountEntry)
-                }
-
-                vaultAccountAdapter.addVaultAccount(VaultAccount(accountName, accountEntriesMap))
-            }
-
-            backupOfVaultAccounts.clear()
-            backupOfVaultAccounts.addAll(vaultAccountAdapter.getVaultAccounts())
-        } catch(exception: JSONException) {
-            Toast.makeText(this, "Encountered exception when adding entries to viewer. " +
-                    "The JSON was loaded and parsed, but the structure might be wrong.", Toast.LENGTH_LONG).show()
-
-            vaultAccountAdapter.clearVaultAccounts()
-            return false
-        }
-
-        return true
-    }
+//    private fun dumpVaultJson(): JSONObject {
+//        return JSONObject().apply {
+//            for(vaultAccount in vaultAdapter.storageVault.accounts) {
+//                this.put(vaultAccount.name, JSONObject().apply {
+//                    for(accountEntry in vaultAccount.entries) {
+//                        put(accountEntry.key, accountEntry.value)
+//                    }
+//                })
+//            }
+//        }
+//    }
+//
+//    private fun loadVaultJson(vaultDataJson: JSONObject): Boolean {
+//        vaultAdapter.clearVault()
+//
+//        try {
+//            for(accountName in vaultDataJson.keys()) {
+//                val accountEntriesMap: MutableMap<String, String> = mutableMapOf()
+//                val accountEntries: JSONObject = vaultDataJson.getJSONObject(accountName)
+//
+//                for(accountEntry: String in accountEntries.keys()) {
+//                    accountEntriesMap[accountEntry] = accountEntries.getString(accountEntry)
+//                }
+//
+//                vaultAdapter.addVaultAccount(Vault.Account(accountName, accountEntriesMap))
+//            }
+//
+//            vaultBackup.clear()
+//            vaultBackup.addAll(vaultAdapter.getVaultAccounts())
+//        } catch(exception: JSONException) {
+//            Toast.makeText(this, "Encountered exception when adding entries to viewer. " +
+//                    "The JSON was loaded and parsed, but the structure might be wrong.", Toast.LENGTH_LONG).show()
+//
+//            vaultAdapter.clearVault()
+//            return false
+//        }
+//
+//        return true
+//    }
 
     private fun saveVault(uri: Uri? = null) {
         val vaultFileUri: Uri = uri ?: activeVaultFileUri.let {
@@ -493,7 +551,7 @@ class VaultAccountViewer : AppCompatActivity() {
         }
 
         val vaultData: ByteArray = try {
-            dumpVaultJson()
+            vaultAdapter.getVault().dumpToJsonObject()
         } catch(exception: Exception) {
             Toast.makeText(this, "Cannot save vault! Exception occurred during JSON serialization; " +
                     "the source data was probably invalid in some way.", Toast.LENGTH_LONG).show()
@@ -511,7 +569,7 @@ class VaultAccountViewer : AppCompatActivity() {
         }.toByteArray().let { // Attempt to encrypt the string's bytes if vault encryption is enabled.
             if (vaultEncryptionEnabled) {
                 try {
-                    vaultSecurity.encryptVault(it)
+                    kryptonCrypto.encrypt(it)
                 } catch (exception: Exception) {
                     Toast.makeText(this, "Cannot save vault! Exception occurred during encryption. " +
                             "If the data is important, maybe try without encryption?", Toast.LENGTH_LONG).show()
@@ -560,43 +618,45 @@ class VaultAccountViewer : AppCompatActivity() {
             if(it != null) {
                 it
             } else {
-                Toast.makeText(this, "Couldn't find TextView etIntegrityCheckRamHash, was null!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Couldn't find TextView etIntegrityCheckRamHash" +
+                        ", was null!", Toast.LENGTH_LONG).show()
                 return
             }
         }
 
-        val etIntegrityCheckDiskHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckDiskHash).let {
-            if(it != null) {
-                it
-            } else {
-                Toast.makeText(this, "Couldn't find TextView etIntegrityCheckDiskHash, was null!", Toast.LENGTH_LONG).show()
-                return
-            }
-        }
+        val editTextIntegrityCheckDiskHash: TextView =
+            dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckDiskHash)
 
         alertDialogBuilder.apply {
             setView(dialogIntegrityCheckResultView)
-            etIntegrityCheckRamHash.text = vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
-            etIntegrityCheckDiskHash.text = vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
+
+            etIntegrityCheckRamHash.text = vaultDataHashInRam.joinToString("") { byte ->
+                "%02x".format(byte)
+            }
+
+            editTextIntegrityCheckDiskHash.text = vaultDataHashOnDisk.joinToString("") { byte ->
+                "%02x".format(byte)
+            }
 
             if(vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
                 setTitle("Integrity Check Passed!")
                 setMessage("The SHA-256 hash of the vault in RAM matches the hash of the vault on the disk.")
 
                 etIntegrityCheckRamHash.setTextColor(Color.GREEN)
-                etIntegrityCheckDiskHash.setTextColor(Color.GREEN)
+                editTextIntegrityCheckDiskHash.setTextColor(Color.GREEN)
 
-                backupOfVaultAccounts.clear()
-                backupOfVaultAccounts.addAll(vaultAccountAdapter.getVaultAccounts())
+                vaultBackup.accounts.clear()
+                vaultBackup.accounts.addAll(vaultAdapter.getVault().accounts)
                 activeVaultFileUri = vaultFileUri
-
             } else {
                 setTitle("Integrity Check Failed!")
-                setMessage("The SHA-256 hash of the vault in RAM does not match the hash of the vault on the disk! The data was not stored properly. " +
-                        "The recommended action is to use Save As to save the vault to a new location instead.")
+
+                setMessage("The SHA-256 hash of the vault in RAM does not match the hash of the " +
+                        "vault on the disk! The data was not stored properly. The recommended action " +
+                        "is to use Save As to save the vault to a new location instead.")
 
                 etIntegrityCheckRamHash.setTextColor(Color.RED)
-                etIntegrityCheckDiskHash.setTextColor(Color.RED)
+                editTextIntegrityCheckDiskHash.setTextColor(Color.RED)
             }
         }.create().show()
     }
@@ -618,26 +678,29 @@ class VaultAccountViewer : AppCompatActivity() {
             return
         }
 
-        val vaultFileDataString: String = vaultFileDataBytes.toString(StandardCharsets.UTF_8)
+        val vaultDataJsonString: String = vaultFileDataBytes.toString(StandardCharsets.UTF_8)
 
         // Attempt to parse the vault data as if it were plaintext JSON.
-        var vaultFileDataJson: JSONObject? = try {
-            JSONObject(vaultFileDataString)
+        var vaultDataJsonObject: JSONObject? = try {
+            JSONObject(vaultDataJsonString)
         } catch(exception: JSONException) {
             null
         }
 
-        if(vaultFileDataJson != null) {
-            if(!loadVaultJson(vaultFileDataJson)) {
+        vaultDataJsonObject?.also { json ->
+            try {
+                vaultAdapter.setVault(Vault().apply {
+                    loadFromJsonObject(json)
+                })
+
+                vaultBackup = vaultAdapter.getVault().clone()
+                vaultEncryptionEnabled = true
+            } catch(except: JSONException) {
                 Toast.makeText(this, "There was a problem with the JSON structure! " +
                         "The JSON is valid, but a different structure was expected!", Toast.LENGTH_LONG).show()
 
-                finish()
-            } else {
-                vaultEncryptionEnabled = false
+                return@loadVaultFile
             }
-
-            return
         }
 
         // If that doesn't work, attempt to decrypt it as if it were AES encrypted.
@@ -654,47 +717,58 @@ class VaultAccountViewer : AppCompatActivity() {
             setCancelable(false)
             setTitle("Provide Decryption Parameters")
             setPositiveButton("Decrypt") { _, _ -> }
-            setNeutralButton("Cancel")   { _, _ -> this@VaultAccountViewer.finish() }
+            setNeutralButton("Cancel")   { _, _ -> this@VaultViewer.finish() }
         }
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
         alertDialog.show()
 
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            val password: String = vaultCredentialsPromptView.findViewById<EditText>(R.id.etPassword).text.toString()
-            val ivMaskLength: Int = vaultCredentialsPromptView.findViewById<EditText>(R.id.etIVMaskLength).text.toString().toIntOrNull() ?: vaultSecurity.aesBlockSize
+            val password: String =
+                vaultCredentialsPromptView.findViewById<EditText>(R.id.etPassword).text.toString()
 
-            if(ivMaskLength < vaultSecurity.aesBlockSize) {
-                Toast.makeText(this, "The provided IV mask length is invalid! Must be greater than or equal " +
-                        "to the AES block size: ${vaultSecurity.aesBlockSize}", Toast.LENGTH_LONG).show()
+            val ivMaskLength: Int =
+                vaultCredentialsPromptView.findViewById<EditText>(R.id.etIVMaskLength).text.toString().toIntOrNull()
+                    ?: KryptonCrypto.CryptoConstants.aesBlockSize
+
+            if(ivMaskLength < KryptonCrypto.CryptoConstants.aesBlockSize) {
+                Toast.makeText(this,
+                "The provided IV mask length is invalid! Must be greater than or equal to " +
+                    "the AES block size: ${KryptonCrypto.CryptoConstants.aesBlockSize}",
+                    Toast.LENGTH_LONG
+                ).show()
 
                 return@setOnClickListener
             }
 
-            vaultSecurity.setCryptoParameters(password, ivMaskLength)
+            kryptonCrypto.setCryptoParameters(password, ivMaskLength)
 
-            vaultFileDataJson = try {
-                JSONObject(String(vaultSecurity.decryptVault(vaultFileDataBytes)))
+            vaultDataJsonObject = try {
+                JSONObject(String(kryptonCrypto.decrypt(vaultFileDataBytes)))
             } catch(exception: Exception) {
                 null
             }
 
-            if(vaultFileDataJson != null) {
-                if(loadVaultJson(vaultFileDataJson as JSONObject)) {
+            vaultDataJsonObject?.also { json ->
+                try {
+                    val vault = Vault()
+                    vault.loadFromJsonObject(json)
+
+                    vaultAdapter.setVault(Vault().apply {
+                        loadFromJsonObject(json)
+                    })
+
+                    vaultBackup = vaultAdapter.getVault().clone()
                     vaultEncryptionEnabled = true
+
                     alertDialog.dismiss()
-                    return@setOnClickListener
-                } else {
+                } catch(exception: JSONException) {
                     Toast.makeText(this, "There was a problem with the JSON structure! Decryption worked and " +
                             "the JSON is valid, but a different structure was expected!", Toast.LENGTH_LONG).show()
                 }
-            } else {
+            } ?: run {
                 Toast.makeText(this, "Decryption failed!", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
             }
-
-            this@VaultAccountViewer.finish()
         }
     }
-
 }

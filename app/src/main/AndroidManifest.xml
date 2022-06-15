@@ -28,7 +28,7 @@
             android:configChanges="orientation"/>
 
         <activity
-            android:name=".VaultAccountViewer"
+            android:name=".VaultViewer"
             android:screenOrientation="portrait"
             android:configChanges="orientation"/>
 
