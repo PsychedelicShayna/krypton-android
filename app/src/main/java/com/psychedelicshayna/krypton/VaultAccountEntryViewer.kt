@@ -201,8 +201,8 @@ class VaultAccountEntryViewer : AppCompatActivity() {
 
                 if (passwordLength > 10000) {
                     AlertDialog.Builder(this@VaultAccountEntryViewer).apply {
-                        setCancelable(false)
-                        setTitle("Long Password")
+                        setCancelable(true)
+                        setTitle("Length Over 10,000")
                         setMessage(
                             "You're about to generate a password that's " +
                                 "$passwordLength characters long! Are you sure?"
