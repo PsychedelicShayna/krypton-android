@@ -171,32 +171,50 @@ class VaultAccountEntryViewer : AppCompatActivity() {
                         else 0
                     } ?: 0
 
-                if (passwordLength > 0) {
-                    val generatedPassword: String =
-                        passwordGenerator.generatePassword(passwordLength, characterClassSpec)
+                val performGenerate = {
+                    if (passwordLength > 0) {
+                        val generatedPassword: String =
+                            passwordGenerator.generatePassword(passwordLength, characterClassSpec)
 
-                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
-                        ?.setText(generatedPassword)
+                        findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
+                            ?.setText(generatedPassword)
+                    }
+
+                    findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertName)
+                        ?.setOnClickListener {
+
+                            findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
+                                ?.run {
+                                    insertToNameCallback.invoke(alertDialog, text.toString())
+                                }
+                        }
+
+                    findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertValue)
+                        ?.setOnClickListener {
+
+                            findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
+                                ?.run {
+                                    insertToValueCallback.invoke(alertDialog, text.toString())
+                                }
+                        }
+                }
+
+                if (passwordLength > 10000) {
+                    AlertDialog.Builder(this@VaultAccountEntryViewer).apply {
+                        setCancelable(false)
+                        setTitle("Long Password")
+                        setMessage(
+                            "You're about to generate a password that's " +
+                                "$passwordLength characters long! Are you sure?"
+                        )
+
+                        setPositiveButton("Yes") { _, _ -> performGenerate() }
+                        setNegativeButton("Cancel") { _, _ -> }
+                    }.create().show()
+                } else {
+                    performGenerate()
                 }
             }
-
-            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertName)
-                ?.setOnClickListener {
-
-                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
-                        ?.run {
-                            insertToNameCallback.invoke(alertDialog, text.toString())
-                        }
-                }
-
-            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertValue)
-                ?.setOnClickListener {
-
-                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
-                        ?.run {
-                            insertToValueCallback.invoke(alertDialog, text.toString())
-                        }
-                }
         }
     }
 
