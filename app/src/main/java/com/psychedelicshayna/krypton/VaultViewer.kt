@@ -261,7 +261,7 @@ class VaultViewer : AppCompatActivity() {
         var unsavedChanges = latestChanges.accounts.size != savedChanges.accounts.size
 
         if (!unsavedChanges) {
-            for (index in 0 until latestChanges.accounts.size - 1) {
+            for (index in 0 until latestChanges.accounts.size) {
                 if (!latestChanges.accounts[index].contentEquals(savedChanges.accounts[index])) {
                     unsavedChanges = true
                     break
