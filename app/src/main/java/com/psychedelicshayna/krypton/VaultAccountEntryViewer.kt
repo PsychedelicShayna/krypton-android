@@ -23,24 +23,34 @@ class VaultAccountEntryViewer : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_vault_account_entry_viewer)
 
-        viewingVaultAccount = (intent.getSerializableExtra("VaultAccount") as Vault.Account?) ?: run {
+        viewingVaultAccount =
+            (intent.getSerializableExtra("VaultAccount") as Vault.Account?) ?: run {
+                Toast.makeText(
+                    this,
+                    "Error! Vault.AccountEntryViewer received no \"VaultAccount\" extra!",
+                    Toast.LENGTH_LONG
+                ).show()
 
-            Toast.makeText(this, "Error! Vault.AccountEntryViewer received no" +
-                    " \"VaultAccount\" extra!", Toast.LENGTH_LONG).show()
+                finish()
 
-            finish()
-
-            return@onCreate
-        }
+                return@onCreate
+            }
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
 
         vaultAccountEntryAdapter = VaultAccountEntryAdapter(this, viewingVaultAccount.entries)
 
         vaultAccountEntryAdapter.onBindViewHolderListener = { holder, _ ->
-            holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
-                onEntryAdapterItemViewContextMenuItemSelected(menuItem, position, contextMenu, view, contextMenuInfo)
-            }
+            holder.onContextMenuItemClickListener =
+                { menuItem, position, contextMenu, view, contextMenuInfo ->
+                    onEntryAdapterItemViewContextMenuItemSelected(
+                        menuItem,
+                        position,
+                        contextMenu,
+                        view,
+                        contextMenuInfo
+                    )
+                }
         }
 
         activityEntryViewerRecyclerViewEntries.layoutManager = LinearLayoutManager(this)
@@ -56,13 +66,25 @@ class VaultAccountEntryViewer : AppCompatActivity() {
         setContentView(R.layout.activity_vault_account_entry_viewer)
     }
 
-    private fun onEntryAdapterItemViewContextMenuItemSelected(menuItem: MenuItem, position: Int, contextMenu: ContextMenu?, view: View?, contextMenuInfo: ContextMenu.ContextMenuInfo?) {
-        val selectedEntryPair: Pair<String, String> = vaultAccountEntryAdapter[position] ?: run {
-            Toast.makeText(this@VaultAccountEntryViewer, "The index of the selected item was out of range!", Toast.LENGTH_LONG).show()
-            return
-        }
+    private fun onEntryAdapterItemViewContextMenuItemSelected(
+        menuItem: MenuItem,
+        position: Int,
+        contextMenu: ContextMenu?,
+        view: View?,
+        contextMenuInfo: ContextMenu.ContextMenuInfo?
+    ) {
+        val selectedEntryPair: Pair<String, String> =
+            vaultAccountEntryAdapter[position] ?: run {
+                Toast.makeText(
+                    this@VaultAccountEntryViewer,
+                    "The index of the selected item was out of range!",
+                    Toast.LENGTH_LONG
+                ).show()
 
-        when(menuItem.itemId) {
+                return
+            }
+
+        when (menuItem.itemId) {
             R.id.menuEntryViewerEntryContextMenuItemCopyEntryName -> {
                 clipboardManager.setPrimaryClip(
                     ClipData.newPlainText("entryName", selectedEntryPair.first)
@@ -82,16 +104,25 @@ class VaultAccountEntryViewer : AppCompatActivity() {
             R.id.menuEntryViewerEntryContextMenuItemRemove -> {
                 vaultAccountEntryAdapter.removeAccountEntry(position)
 
-                setResult(RESULT_OK, Intent().apply {
-                    putExtra("VaultAccount", viewingVaultAccount.apply {
-                        entries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }.toMutableMap()
-                    })
-                })
+                setResult(
+                    RESULT_OK,
+                    Intent().apply {
+                        putExtra(
+                            "VaultAccount",
+                            viewingVaultAccount.apply {
+                                entries = vaultAccountEntryAdapter.accountEntryPairs.toMap().toMutableMap()
+                            }
+                        )
+                    }
+                )
             }
         }
     }
 
-    private fun showPasswordGeneratorDialog(insertToNameCallback: (AlertDialog, String) -> Unit, insertToValueCallback: (AlertDialog, String) -> Unit) {
+    private fun showPasswordGeneratorDialog(
+        insertToNameCallback: (AlertDialog, String) -> Unit,
+        insertToValueCallback: (AlertDialog, String) -> Unit
+    ) {
         val dialogEntriesPasswordGenerator: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_vault_account_entry_password_generator,
             null
@@ -111,44 +142,75 @@ class VaultAccountEntryViewer : AppCompatActivity() {
             findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonGenerate)?.setOnClickListener {
                 val passwordGenerator = PasswordGenerator()
 
-                val characterClassSpec: PasswordGenerator.CharacterClassSpec = PasswordGenerator.CharacterClassSpec().apply {
-                    uppercase.enabled = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxUpper)   ?.isChecked ?: false
-                    lowercase.enabled = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxLower)   ?.isChecked ?: false
-                    numerical.enabled = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxNumeric) ?.isChecked ?: false
-                    special.enabled   = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxSpecial) ?.isChecked ?: false
-                    extra.enabled     = findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxExtra)   ?.isChecked ?: false
-                }
+                val characterClassSpec: PasswordGenerator.CharacterClassSpec =
+                    PasswordGenerator.CharacterClassSpec().apply {
+                        uppercase.enabled =
+                            findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxUpper)
+                                ?.isChecked ?: false
 
-                val passwordLength: Int = findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextLength)?.run {
-                    if(length() > 0) text.toString().toInt()
-                    else 0
-                } ?: 0
+                        lowercase.enabled =
+                            findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxLower)
+                                ?.isChecked ?: false
 
-                if(passwordLength > 0) {
-                    val generatedPassword: String = passwordGenerator.generatePassword(passwordLength, characterClassSpec)
-                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)?.setText(generatedPassword)
+                        numerical.enabled =
+                            findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxNumeric)
+                                ?.isChecked ?: false
+
+                        special.enabled =
+                            findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxSpecial)
+                                ?.isChecked ?: false
+
+                        extra.enabled =
+                            findViewById<CheckBox>(R.id.dialogEntriesPasswordGeneratorCheckBoxExtra)
+                                ?.isChecked ?: false
+                    }
+
+                val passwordLength: Int =
+                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextLength)?.run {
+                        if (length() > 0) text.toString().toInt()
+                        else 0
+                    } ?: 0
+
+                if (passwordLength > 0) {
+                    val generatedPassword: String =
+                        passwordGenerator.generatePassword(passwordLength, characterClassSpec)
+
+                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
+                        ?.setText(generatedPassword)
                 }
             }
 
-            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertName)?.setOnClickListener {
-                findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)?.run {
-                    insertToNameCallback.invoke(alertDialog, text.toString())
-                }
-            }
+            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertName)
+                ?.setOnClickListener {
 
-            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertValue)?.setOnClickListener {
-                findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)?.run {
-                    insertToValueCallback.invoke(alertDialog, text.toString())
+                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
+                        ?.run {
+                            insertToNameCallback.invoke(alertDialog, text.toString())
+                        }
                 }
-            }
+
+            findViewById<Button>(R.id.dialogEntriesPasswordGeneratorButtonInsertValue)
+                ?.setOnClickListener {
+
+                    findViewById<EditText>(R.id.dialogEntriesPasswordGeneratorEditTextPassword)
+                        ?.run {
+                            insertToValueCallback.invoke(alertDialog, text.toString())
+                        }
+                }
         }
     }
 
     private fun editEntry(position: Int) {
-        val entry: Pair<String, String> = vaultAccountEntryAdapter[position] ?: run {
-            Toast.makeText(this, "Error! Cannot access the entry at index $position, index out of range!", Toast.LENGTH_LONG).show()
-            return
-        }
+        val entry: Pair<String, String> =
+            vaultAccountEntryAdapter[position] ?: run {
+                Toast.makeText(
+                    this,
+                    "Error! Cannot access the entry at index $position, index out of range!",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                return
+            }
 
         val dialogEntryValuesInput: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_input_account_entry_values,
@@ -173,8 +235,8 @@ class VaultAccountEntryViewer : AppCompatActivity() {
 
             setTitle("Enter New Entry Values")
 
-            setPositiveButton("Okay")     { _, _  -> }
-            setNegativeButton("Cancel")  { _ , _ -> }
+            setPositiveButton("Okay") { _, _ -> }
+            setNegativeButton("Cancel") { _, _ -> }
         }
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
@@ -184,35 +246,55 @@ class VaultAccountEntryViewer : AppCompatActivity() {
             val entryName: String = editTextEntryName.text.toString()
             val entryValue: String = editTextEntryValue.text.toString()
 
-            if(entryName.isBlank()) {
-                Toast.makeText(this, "Enter an entry name first. Name cannot be blank.", Toast.LENGTH_LONG).show()
+            if (entryName.isBlank()) {
+                Toast.makeText(
+                    this,
+                    "Enter an entry name first. Name cannot be blank.",
+                    Toast.LENGTH_LONG
+                ).show()
+
                 return@setOnClickListener
             }
 
-            if(vaultAccountEntryAdapter.hasEntryWithName(entryName) &&  entryName != entry.first) {
-                Toast.makeText(this, "An entry with that name already exists!", Toast.LENGTH_LONG).show()
+            if (vaultAccountEntryAdapter.hasEntryWithName(entryName) && entryName != entry.first) {
+                Toast.makeText(
+                    this,
+                    "An entry with that name already exists!",
+                    Toast.LENGTH_LONG
+                ).show()
+
                 return@setOnClickListener
             }
 
             vaultAccountEntryAdapter.setAccountEntry(position, Pair(entryName, entryValue))
 
-            setResult(RESULT_OK, Intent().apply {
-                putExtra("VaultAccount", viewingVaultAccount.apply {
-                    entries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }.toMutableMap()
-                })
-            })
+            setResult(
+                RESULT_OK,
+                Intent().apply {
+                    putExtra(
+                        "VaultAccount",
+                        viewingVaultAccount.apply {
+                            entries = vaultAccountEntryAdapter.accountEntryPairs.toMap().toMutableMap()
+                        }
+                    )
+                }
+            )
 
             alertDialog.dismiss()
         }
 
         buttonPasswordGenerator.setOnClickListener {
-            showPasswordGeneratorDialog({alertDialog, generatedPassword ->
-                editTextEntryName.setText(generatedPassword)
-                alertDialog.dismiss()
-            }, { alertDialog, generatedPassword ->
-                editTextEntryValue.setText(generatedPassword)
-                alertDialog.dismiss()
-            })
+            showPasswordGeneratorDialog(
+                { alertDialog, generatedPassword ->
+                    editTextEntryName.setText(generatedPassword)
+                    alertDialog.dismiss()
+                },
+
+                { alertDialog, generatedPassword ->
+                    editTextEntryValue.setText(generatedPassword)
+                    alertDialog.dismiss()
+                }
+            )
         }
     }
 
@@ -231,15 +313,16 @@ class VaultAccountEntryViewer : AppCompatActivity() {
         val buttonPasswordGenerator: Button =
             dialogEntryValuesInput.findViewById(R.id.dialogEntryValuesInputButtonPasswordGenerator)
 
-        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this).apply {
-            setView(dialogEntryValuesInput)
-            setCancelable(true)
+        val alertDialogBuilder: AlertDialog.Builder =
+            AlertDialog.Builder(this).apply {
+                setView(dialogEntryValuesInput)
+                setCancelable(true)
 
-            setTitle("Enter Entry Name")
+                setTitle("Enter Entry Name")
 
-            setPositiveButton("Add")     { _, _  -> }
-            setNegativeButton("Cancel")  { _ , _ -> }
-        }
+                setPositiveButton("Add") { _, _ -> }
+                setNegativeButton("Cancel") { _, _ -> }
+            }
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
         alertDialog.show()
@@ -248,35 +331,55 @@ class VaultAccountEntryViewer : AppCompatActivity() {
             val entryName: String = editTextEntryName.text.toString()
             val entryValue: String = editTextEntryValue.text.toString()
 
-            if(entryName.isBlank()) {
-                Toast.makeText(this, "Enter an entry name first. Name cannot be blank.", Toast.LENGTH_LONG).show()
+            if (entryName.isBlank()) {
+                Toast.makeText(
+                    this,
+                    "Enter an entry name first. Name cannot be blank.",
+                    Toast.LENGTH_LONG
+                ).show()
+
                 return@setOnClickListener
             }
 
-            if(vaultAccountEntryAdapter.hasEntryWithName(entryName)) {
-                Toast.makeText(this, "An entry with that name already exists!", Toast.LENGTH_LONG).show()
+            if (vaultAccountEntryAdapter.hasEntryWithName(entryName)) {
+                Toast.makeText(
+                    this,
+                    "An entry with that name already exists!",
+                    Toast.LENGTH_LONG
+                ).show()
+
                 return@setOnClickListener
             }
 
             vaultAccountEntryAdapter.addAccountEntry(entryName, entryValue)
 
-            setResult(RESULT_OK, Intent().apply {
-                putExtra("VaultAccount", viewingVaultAccount.apply {
-                    entries = vaultAccountEntryAdapter.accountEntryPairs.associate { it }.toMutableMap()
-                })
-            })
+            setResult(
+                RESULT_OK,
+                Intent().apply {
+                    putExtra(
+                        "VaultAccount",
+                        viewingVaultAccount.apply {
+                            entries = vaultAccountEntryAdapter.accountEntryPairs.toMap().toMutableMap()
+                        }
+                    )
+                }
+            )
 
             alertDialog.dismiss()
         }
 
         buttonPasswordGenerator.setOnClickListener {
-            showPasswordGeneratorDialog({alertDialog, generatedPassword ->
-                editTextEntryName.text = generatedPassword
-                alertDialog.dismiss()
-            }, { alertDialog, generatedPassword ->
-                editTextEntryValue.text = generatedPassword
-                alertDialog.dismiss()
-            })
+            showPasswordGeneratorDialog(
+                { alertDialog, generatedPassword ->
+                    editTextEntryName.text = generatedPassword
+                    alertDialog.dismiss()
+                },
+
+                { alertDialog, generatedPassword ->
+                    editTextEntryValue.text = generatedPassword
+                    alertDialog.dismiss()
+                }
+            )
         }
     }
 }

@@ -38,16 +38,18 @@ class VaultAdapter(
         val representedItemView: View
     ) : RecyclerView.ViewHolder(representedItemView) {
         var onContextMenuItemClickListener:
-                ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
+            ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
 
-        private fun onCreateContextMenuListener(menu: ContextMenu?,
-                                                view: View?,
-                                                menuInfo: ContextMenu.ContextMenuInfo?) {
+        private fun onCreateContextMenuListener(
+            menu: ContextMenu?,
+            view: View?,
+            menuInfo: ContextMenu.ContextMenuInfo?
+        ) {
 
             menu?.let { contextMenu ->
                 MenuInflater(parentContext).inflate(R.menu.menu_account_viewer_account_context_menu, contextMenu)
 
-                for(menuItem: MenuItem in contextMenu) {
+                for (menuItem: MenuItem in contextMenu) {
                     menuItem.setOnMenuItemClickListener {
 
                         onContextMenuItemClickListener?.invoke(
@@ -98,9 +100,9 @@ class VaultAdapter(
     override fun getItemCount(): Int = displayVault.accounts.size
 
     private fun notifyStorageVaultChange(index: Int, changeType: ChangeType) {
-        if(accountNameSearchQuery.isNotEmpty()) return autoPopulateDisplayVault()
+        if (accountNameSearchQuery.isNotEmpty()) return autoPopulateDisplayVault()
 
-        when(changeType) {
+        when (changeType) {
             ChangeType.INSERTED -> {
                 displayVault.accounts.add(index, storageVault.accounts[index])
                 notifyItemInserted(index)
@@ -121,8 +123,8 @@ class VaultAdapter(
     private fun autoPopulateDisplayVault() {
         val newDisplayVault = Vault()
 
-        for(account in storageVault.accounts) {
-            if(account.name.lowercase(Locale.ROOT).contains(accountNameSearchQuery.lowercase(Locale.ROOT))) {
+        for (account in storageVault.accounts) {
+            if (account.name.lowercase(Locale.ROOT).contains(accountNameSearchQuery.lowercase(Locale.ROOT))) {
                 newDisplayVault.accounts.add(account)
             }
         }
@@ -140,14 +142,14 @@ class VaultAdapter(
         storageVault.accounts.all { account ->
             account.name != newAccount.name
         }.also { isNotDuplicate ->
-            if(isNotDuplicate) {
+            if (isNotDuplicate) {
                 storageVault.accounts.add(newAccount)
                 notifyStorageVaultChange(storageVault.accounts.size - 1, ChangeType.INSERTED)
             }
         }
 
     fun removeVaultAccount(vaultAccountIndex: Int) {
-        if(vaultAccountIndex < storageVault.accounts.size) {
+        if (vaultAccountIndex < storageVault.accounts.size) {
             storageVault.accounts.removeAt(vaultAccountIndex)
             notifyStorageVaultChange(vaultAccountIndex, ChangeType.REMOVED)
         }
@@ -172,7 +174,7 @@ class VaultAdapter(
     }
 
     fun setVaultAccount(index: Int, newVaultAccount: Vault.Account) {
-        if(index >= storageVault.accounts.size)
+        if (index >= storageVault.accounts.size)
             throw IndexOutOfBoundsException("Index exceeds ${storageVault.accounts.size}")
 
         storageVault.accounts[index] = newVaultAccount
@@ -180,7 +182,7 @@ class VaultAdapter(
     }
 
     fun setVaultAccountEntries(index: Int, newEntries: MutableMap<String, String>) {
-        if(index >= storageVault.accounts.size)
+        if (index >= storageVault.accounts.size)
             throw IndexOutOfBoundsException("vaultAccountIndex exceeds ${storageVault.accounts.size}")
 
         storageVault.accounts[index].entries = newEntries.toMutableMap()
@@ -201,11 +203,11 @@ class VaultAdapter(
         getVaultAccountIndexByName(getDisplayVaultAccount(index)?.name ?: "")
 
     fun getDisplayVaultAccount(index: Int): Vault.Account? =
-        if(index < displayVault.accounts.size) displayVault.accounts[index]
+        if (index < displayVault.accounts.size) displayVault.accounts[index]
         else null
 
     fun getStorageVaultAccount(index: Int): Vault.Account? =
-        if(index < storageVault.accounts.size) storageVault.accounts[index]
+        if (index < storageVault.accounts.size) storageVault.accounts[index]
         else null
 
     fun performAccountNameSearchQuery(searchQuery: String) {

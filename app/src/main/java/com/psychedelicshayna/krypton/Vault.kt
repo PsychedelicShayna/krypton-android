@@ -17,8 +17,8 @@ class Vault : Serializable {
         }
 
         fun contentEquals(other: Account): Boolean {
-            return     name    == other.name
-                    && entries == other.entries
+            return name == other.name &&
+                entries == other.entries
         }
     }
 
@@ -27,10 +27,10 @@ class Vault : Serializable {
     fun dumpToJsonObject(): JSONObject {
         val vaultObject = JSONObject()
 
-        for(account in accounts) {
+        for (account in accounts) {
             val entriesObject = JSONObject()
 
-            for(entry in account.entries)
+            for (entry in account.entries)
                 entriesObject.put(entry.key, entry.value)
 
             vaultObject.put(account.name, entriesObject)
@@ -42,7 +42,7 @@ class Vault : Serializable {
     fun loadFromJsonObject(jsonObject: JSONObject) {
         val newAccounts: MutableList<Account> = mutableListOf()
 
-        for(name: String in jsonObject.keys()) {
+        for (name: String in jsonObject.keys()) {
             val newAccount = Account()
             newAccount.name = name
 

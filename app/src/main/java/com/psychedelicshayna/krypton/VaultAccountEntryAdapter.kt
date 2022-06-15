@@ -20,15 +20,15 @@ class VaultAccountEntryAdapter(
     ) : RecyclerView.ViewHolder(representedItemView) {
 
         var onContextMenuItemClickListener:
-                ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
+            ((MenuItem, Int, ContextMenu?, View?, ContextMenu.ContextMenuInfo?) -> Unit)? = null
 
         private fun onCreateContextMenuListener
-                    (menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
+        (menu: ContextMenu?, view: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
 
             menu?.let { contextMenu ->
                 MenuInflater(parentContext).inflate(R.menu.menu_entry_viewer_entry_context_menu, contextMenu)
 
-                for(menuItem: MenuItem in contextMenu) {
+                for (menuItem: MenuItem in contextMenu) {
                     menuItem.setOnMenuItemClickListener {
 
                         onContextMenuItemClickListener?.invoke(
@@ -51,9 +51,11 @@ class VaultAccountEntryAdapter(
 
     val accountEntryPairs: MutableList<Pair<String, String>> =
         mutableListOf<Pair<String, String>>().apply {
-            addAll(accountEntriesMap.map { entry ->
-                Pair(entry.key, entry.value)
-            })
+            addAll(
+                accountEntriesMap.map { entry ->
+                    Pair(entry.key, entry.value)
+                }
+            )
         }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -72,10 +74,12 @@ class VaultAccountEntryAdapter(
             viewHolder.representedItemView.findViewById<TextView>(R.id.itemAccountEntryTextViewEntryValue)?.apply {
                 movementMethod = ScrollingMovementMethod()
 
-                setOnTouchListener(View.OnTouchListener { view: View?, _ ->
-                    view?.parent?.requestDisallowInterceptTouchEvent(true)
-                    return@OnTouchListener false
-                })
+                setOnTouchListener(
+                    View.OnTouchListener { view: View?, _ ->
+                        view?.parent?.requestDisallowInterceptTouchEvent(true)
+                        return@OnTouchListener false
+                    }
+                )
             }
         }
     }
@@ -94,7 +98,7 @@ class VaultAccountEntryAdapter(
     }
 
     operator fun get(index: Int): Pair<String, String>? =
-        if(index < accountEntryPairs.size) accountEntryPairs[index] else null
+        if (index < accountEntryPairs.size) accountEntryPairs[index] else null
 
     fun getEntriesMap(): Map<String, String> = accountEntryPairs.associate { it }
 
@@ -110,7 +114,7 @@ class VaultAccountEntryAdapter(
     }
 
     fun removeAccountEntry(index: Int) {
-        if(index < accountEntryPairs.size) {
+        if (index < accountEntryPairs.size) {
             accountEntryPairs.removeAt(index)
             notifyItemRemoved(index)
         }
@@ -123,7 +127,7 @@ class VaultAccountEntryAdapter(
         }
     }
 
-    fun setAccountEntry(accountEntryIndex: Int, newAccountEntry: Pair<String, String>)  {
+    fun setAccountEntry(accountEntryIndex: Int, newAccountEntry: Pair<String, String>) {
         accountEntryPairs[accountEntryIndex] = newAccountEntry
         notifyItemChanged(accountEntryIndex)
     }

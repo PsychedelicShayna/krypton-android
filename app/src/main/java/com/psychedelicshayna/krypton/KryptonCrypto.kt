@@ -1,17 +1,15 @@
 package com.psychedelicshayna.krypton
 
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
-import javax.crypto.Cipher
-
-import java.security.InvalidParameterException
-import java.security.MessageDigest
-import java.security.SecureRandom
-
 import org.signal.argon2.Argon2
 import org.signal.argon2.MemoryCost
 import org.signal.argon2.Type
 import org.signal.argon2.Version
+import java.security.InvalidParameterException
+import java.security.MessageDigest
+import java.security.SecureRandom
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 class KryptonCrypto {
     object CryptoConstants {
@@ -32,9 +30,13 @@ class KryptonCrypto {
     private fun applyPkcs7Padding(data: ByteArray, multiple: Int = 16): ByteArray {
         val delta: Int = multiple - (data.size % multiple)
 
-        return if(delta != multiple) {
+        return if (delta != multiple) {
             data.toMutableList().apply {
-                addAll(Array(delta) { delta.toByte() })
+                addAll(
+                    Array(delta) {
+                        delta.toByte()
+                    }
+                )
             }.toByteArray()
         } else {
             data
@@ -42,17 +44,17 @@ class KryptonCrypto {
     }
 
     private fun stripPkcs7Padding(data: ByteArray): ByteArray {
-        if(data.isEmpty()) return data
+        if (data.isEmpty()) return data
 
         val delta: Int = data.last().toUByte().toInt()
 
-        val pkcs7Valid: Boolean = if(data.size >= delta) {
+        val pkcs7Valid: Boolean = if (data.size >= delta) {
             data.slice(IntRange((data.size) - delta, data.size - 1)).all { it == delta.toByte() }
         } else {
             false
         }
 
-        return if(pkcs7Valid) {
+        return if (pkcs7Valid) {
             data.copyOfRange(0, (data.size) - delta)
         } else {
             data
@@ -63,7 +65,7 @@ class KryptonCrypto {
         val sha512: MessageDigest = MessageDigest.getInstance("SHA-512")
         var digest: ByteArray = data
 
-        for(i in 1..iterations)
+        for (i in 1..iterations)
             digest = sha512.digest(digest)
 
         return digest
@@ -90,14 +92,16 @@ class KryptonCrypto {
             init(
                 cipherMode,
                 SecretKeySpec(derivedAesCipherKey!!.hash, "AES"),
-                IvParameterSpec(ByteArray(CryptoConstants.aesBlockSize).apply {
-                    secureRandom.nextBytes(this)
-                })
+                IvParameterSpec(
+                    ByteArray(CryptoConstants.aesBlockSize).apply {
+                        secureRandom.nextBytes(this)
+                    }
+                )
             )
         }
     }
 
-    fun decrypt(decryptionInput:ByteArray): ByteArray {
+    fun decrypt(decryptionInput: ByteArray): ByteArray {
         return stripPkcs7Padding(setupAesCipherObject(Cipher.DECRYPT_MODE).doFinal(decryptionInput)).let {
             it.copyOfRange(ivMaskLength, it.size)
         }
@@ -114,9 +118,12 @@ class KryptonCrypto {
     }
 
     fun setCryptoParameters(password: String, ivMaskLength: Int = 16) {
-        if(ivMaskLength < CryptoConstants.aesBlockSize) {
+        if (ivMaskLength < CryptoConstants.aesBlockSize) {
+
             throw InvalidParameterException(
-                "The provided IV mask length is smaller than the AES block size of ${CryptoConstants.aesBlockSize} bytes!")
+                "The provided IV mask length is smaller than the AES block size of " +
+                    "${CryptoConstants.aesBlockSize} bytes!"
+            )
         }
 
         derivedAesCipherKey = deriveAesCipherKey(password)

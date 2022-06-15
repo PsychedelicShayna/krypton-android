@@ -5,9 +5,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import kotlinx.android.synthetic.main.activity_main_layout.*
 
@@ -19,10 +19,13 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
 
-        if(resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.MainActivity.loadVaultFile) {
+        if (resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.MainActivity.loadVaultFile) {
             resultData?.data?.also {
-                contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                                                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
 
                 loadVaultFileUri = it
                 loadVault()
@@ -31,13 +34,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadVault() {
-        if(loadVaultFileUri == null) {
+        if (loadVaultFileUri == null) {
             val openFileIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
 
                 flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
-                        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
 
                 type = "*/*"
             }
@@ -55,7 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadDefaultVault() {
         val defaultVaultFileUri: Uri? = sharedPreferences.getString("DefaultVaultFilePath", null).let {
-            if(it != null) Uri.parse(it)
+            if (it != null) Uri.parse(it)
             else {
                 Toast.makeText(this, "No default vault has been set!", Toast.LENGTH_SHORT).show()
                 return
@@ -82,10 +85,10 @@ class MainActivity : AppCompatActivity() {
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 
-        sharedPreferences   = getSharedPreferences("KryptonPreferences", Context.MODE_PRIVATE)
+        sharedPreferences = getSharedPreferences("KryptonPreferences", Context.MODE_PRIVATE)
 
-        btnLoadVault.setOnClickListener        { loadVault()        }
+        btnLoadVault.setOnClickListener { loadVault() }
         btnLoadDefaultVault.setOnClickListener { loadDefaultVault() }
-        btnNewVault.setOnClickListener         { newVault()         }
+        btnNewVault.setOnClickListener { newVault() }
     }
 }
