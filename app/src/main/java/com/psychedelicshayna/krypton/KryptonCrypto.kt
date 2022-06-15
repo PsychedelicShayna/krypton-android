@@ -65,8 +65,9 @@ class KryptonCrypto {
         val sha512: MessageDigest = MessageDigest.getInstance("SHA-512")
         var digest: ByteArray = data
 
-        for (i in 1..iterations)
+        (1 until iterations).forEach { _ ->
             digest = sha512.digest(digest)
+        }
 
         return digest
     }
