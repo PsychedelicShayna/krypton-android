@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -20,9 +21,7 @@ import kotlinx.android.synthetic.main.activity_vault_account_viewer.*
 import org.apache.commons.io.IOUtils
 import org.json.JSONException
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
+import java.io.*
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
@@ -704,32 +703,32 @@ class VaultViewer : AppCompatActivity() {
     }
 
     private fun loadVaultFile(vaultFileUri: Uri) {
-        val vaultFileDataBytes: ByteArray? = try {
-            applicationContext.contentResolver.openInputStream(vaultFileUri)?.use { inputStream ->
-                IOUtils.toByteArray(inputStream)
+        val vaultFileDescriptor: ParcelFileDescriptor =
+            contentResolver.openFileDescriptor(vaultFileUri, "r") ?: run {
+                Toast.makeText(
+                    this,
+                    "Cannot open a file descriptor to the vault file.",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                finish()
+                return
             }
-        } catch (exception: FileNotFoundException) {
-            Toast.makeText(this, "FileNotFoundException when attempting to open vault file \"$vaultFileUri\"", Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
 
-        if (vaultFileDataBytes == null) {
-            Toast.makeText(this, "Failed to read vault file; file data is null!", Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
+        val fileBytes: ByteArray =
+            FileInputStream(vaultFileDescriptor.fileDescriptor).use { fileInputStream ->
+                fileInputStream.readBytes()
+            }
 
-        val vaultDataJsonString: String = vaultFileDataBytes.toString(StandardCharsets.UTF_8)
-
-        // Attempt to parse the vault data as if it were plaintext JSON.
-        var vaultDataJsonObject: JSONObject? = try {
-            JSONObject(vaultDataJsonString)
+        // Attempt to parse the file's bytes as if it were plaintext JSON.
+        val fileContentsJson: JSONObject? = try {
+            JSONObject(fileBytes.toString(StandardCharsets.UTF_8))
         } catch (exception: JSONException) {
             null
         }
 
-        vaultDataJsonObject?.also { json ->
+        // If it worked, attempt to load the JSONObject vault data.
+        fileContentsJson?.also { json ->
             try {
                 vaultAdapter.setVault(
                     Vault().apply {
@@ -739,11 +738,13 @@ class VaultViewer : AppCompatActivity() {
 
                 vaultBackup = vaultAdapter.getVault().clone()
                 vaultEncryptionEnabled = true
+
+                return@loadVaultFile
             } catch (except: JSONException) {
                 Toast.makeText(
                     this,
-                    "There was a problem with the JSON structure! " +
-                        "The JSON is valid, but a different structure was expected!",
+                    "There was a problem with the JSON structure! The JSON is valid, but a " +
+                            "different structure was expected!",
                     Toast.LENGTH_LONG
                 ).show()
 
@@ -751,33 +752,35 @@ class VaultViewer : AppCompatActivity() {
             }
         }
 
-        // If that doesn't work, attempt to decrypt it as if it were AES encrypted.
+        // If it didn't work, attempt to decrypt the bytes before trying again.
         Toast.makeText(this, "Assuming the vault is encrypted.", Toast.LENGTH_LONG).show()
 
-        val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_input_vault_password, null
+        val dialogInputVaultPassword: View = LayoutInflater.from(this).inflate(
+            R.layout.dialog_input_vault_password,
+            null
         )
 
-        val alertDialogBuilder = AlertDialog.Builder(this)
-        alertDialogBuilder.setView(vaultCredentialsPromptView)
-
-        alertDialogBuilder.apply {
+        val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
             setCancelable(false)
             setTitle("Provide Decryption Parameters")
+            setView(dialogInputVaultPassword)
+
             setPositiveButton("Decrypt") { _, _ -> }
             setNeutralButton("Cancel") { _, _ -> this@VaultViewer.finish() }
-        }
 
-        val alertDialog: AlertDialog = alertDialogBuilder.create()
-        alertDialog.show()
+            create().apply { show() }
+        }
 
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val password: String =
-                vaultCredentialsPromptView.findViewById<EditText>(R.id.etPassword).text.toString()
+                dialogInputVaultPassword.findViewById<EditText>(R.id.etPassword).run {
+                    text.toString()
+                }
 
             val ivMaskLength: Int =
-                vaultCredentialsPromptView.findViewById<EditText>(R.id.etIVMaskLength).text.toString().toIntOrNull()
-                    ?: KryptonCrypto.CryptoConstants.aesBlockSize
+                dialogInputVaultPassword.findViewById<EditText>(R.id.etIVMaskLength).run {
+                    text.toString().toIntOrNull() ?: KryptonCrypto.CryptoConstants.aesBlockSize
+                }
 
             if (ivMaskLength < KryptonCrypto.CryptoConstants.aesBlockSize) {
                 Toast.makeText(
@@ -792,17 +795,14 @@ class VaultViewer : AppCompatActivity() {
 
             kryptonCrypto.setCryptoParameters(password, ivMaskLength)
 
-            vaultDataJsonObject = try {
-                JSONObject(String(kryptonCrypto.decrypt(vaultFileDataBytes)))
-            } catch (exception: Exception) {
+            val decryptedFileContentsJson: JSONObject? = try {
+                JSONObject(String(kryptonCrypto.decrypt(fileBytes)))
+            } catch (exception: JSONException) {
                 null
             }
 
-            vaultDataJsonObject?.also { json ->
+            decryptedFileContentsJson?.also { json ->
                 try {
-                    val vault = Vault()
-                    vault.loadFromJsonObject(json)
-
                     vaultAdapter.setVault(
                         Vault().apply {
                             loadFromJsonObject(json)
