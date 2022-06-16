@@ -19,8 +19,7 @@ android:layout_marginBottom="8dp">
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerHorizontalDivider1"
-        android:iconifiedByDefault="false"
-    />
+        android:iconifiedByDefault="false"/>
 
     <View
         android:id="@+id/activityAccountViewerHorizontalDivider1"
@@ -31,8 +30,7 @@ android:layout_marginBottom="8dp">
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/activityAccountViewerSearchViewAccountSearch"
         app:layout_constraintBottom_toTopOf="@id/activityAccountViewerRecyclerViewVaultAccounts"
-        android:layout_marginTop="16dp"
-    />
+        android:layout_marginTop="16dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/activityAccountViewerRecyclerViewVaultAccounts"
@@ -42,8 +40,7 @@ android:layout_marginBottom="8dp">
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/activityAccountViewerHorizontalDivider1"
-        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerHorizontalDivider2"
-    />
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerHorizontalDivider2"/>
 
     <View
         android:id="@+id/activityAccountViewerHorizontalDivider2"
@@ -54,64 +51,70 @@ android:layout_marginBottom="8dp">
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/activityAccountViewerRecyclerViewVaultAccounts"
         app:layout_constraintBottom_toTopOf="@id/activityAccountViewerButtonAddAccount"
-        android:layout_marginBottom="8dp"
-    />
+        android:layout_marginBottom="8dp"/>
 
     <Button
         android:id="@+id/activityAccountViewerButtonAddAccount"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Add Account"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/activityAccountViewerHorizontalDivider2"
-        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonSave"
-    />
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonSave"/>
 
     <Button
         android:id="@+id/activityAccountViewerButtonSave"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Save"
-        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonRevertChanges"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/activityAccountViewerButtonSaveAs"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonRevertChanges"/>
+
 
     <Button
         android:id="@+id/activityAccountViewerButtonSaveAs"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Save As"
-        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonRevertChanges"
+        app:layout_constraintStart_toEndOf="@+id/activityAccountViewerButtonSave"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/activityAccountViewerButtonSave" />
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonDiff"/>
+
     <Button
         android:id="@+id/activityAccountViewerButtonRevertChanges"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Revert Changes"
-        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonDiff"
+        app:layout_constraintStart_toEndOf="@id/activityAccountViewerButtonDiff"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/activityAccountViewerButtonSetDefaultVault"/>
 
     <Button
         android:id="@+id/activityAccountViewerButtonDiff"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Diff"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/activityAccountViewerButtonRevertChanges"
+        app:layout_constraintBottom_toTopOf="@id/activityAccountViewerButtonSecurity"/>
+
+    <Button
+        android:id="@+id/activityAccountViewerButtonSetDefaultVault"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:text="Set Default Vault"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/activityAccountViewerButtonSecurity"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <Button
         android:id="@+id/activityAccountViewerButtonSecurity"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Security"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/activityAccountViewerButtonSetDefaultVault"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/activityAccountViewerButtonDiff" />
-
-
-
+        app:layout_constraintBottom_toBottomOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

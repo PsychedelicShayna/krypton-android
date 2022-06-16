@@ -73,6 +73,7 @@ class VaultViewer : AppCompatActivity() {
         activityAccountViewerButtonSave.setOnClickListener(::onSaveButtonClickListener)
 
         activityAccountViewerButtonSaveAs.setOnClickListener { saveVaultAs() }
+        activityAccountViewerButtonSetDefaultVault.setOnClickListener { setDefaultVault() }
 
         activityAccountViewerButtonRevertChanges.setOnClickListener {
             vaultAdapter.setVault(vaultBackup)
@@ -766,5 +767,24 @@ class VaultViewer : AppCompatActivity() {
                 Toast.makeText(this, "Decryption failed!", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun setDefaultVault() {
+        if (activeVaultFileUri == null) {
+            Toast.makeText(
+                this,
+                "No active vault file! Save the vault first, or load the vault you would like to set.",
+                Toast.LENGTH_LONG
+            ).show()
+
+            return
+        }
+
+        getSharedPreferences("KryptonPreferences", MODE_PRIVATE).edit().run {
+            putString("DefaultVaultUri", activeVaultFileUri.toString())
+            apply()
+        }
+
+        Toast.makeText(this, "The default vault has been set.", Toast.LENGTH_LONG).show()
     }
 }

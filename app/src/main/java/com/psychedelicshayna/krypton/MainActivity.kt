@@ -12,29 +12,24 @@ import androidx.appcompat.app.AppCompatDelegate
 import kotlinx.android.synthetic.main.activity_main_layout.*
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var sharedPreferences: SharedPreferences
-
-    private var loadVaultFileUri: Uri? = null
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
 
         if (resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.MainActivity.loadVaultFile) {
-            resultData?.data?.also {
+            resultData?.data?.also { selectedFileUri ->
                 contentResolver.takePersistableUriPermission(
-                    it,
+                    selectedFileUri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or
                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 )
 
-                loadVaultFileUri = it
-                loadVault()
+                loadVault(selectedFileUri)
             }
         }
     }
 
-    private fun loadVault() {
-        if (loadVaultFileUri == null) {
+    private fun loadVault(vaultFileUri: Uri? = null) {
+        if (vaultFileUri == null) {
             val openFileIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
 
@@ -48,31 +43,27 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(openFileIntent, ActivityResultRequestCodes.MainActivity.loadVaultFile)
         } else {
             Intent(this, VaultViewer::class.java).apply {
-                putExtra("VaultFileUri", loadVaultFileUri.toString())
+                putExtra("VaultFileUri", vaultFileUri.toString())
                 startActivity(this)
             }
-
-            loadVaultFileUri = null
         }
     }
 
     private fun loadDefaultVault() {
-        val defaultVaultFileUri: Uri? = sharedPreferences.getString("DefaultVaultFilePath", null).let {
-            if (it != null) Uri.parse(it)
-            else {
-                Toast.makeText(this, "No default vault has been set!", Toast.LENGTH_SHORT).show()
-                return
+        val defaultVaultFileUri: Uri = getSharedPreferences("KryptonPreferences", MODE_PRIVATE).run {
+            getString("DefaultVaultUri", null)?.let { uriString ->
+                Uri.parse(uriString)
             }
+        } ?: run {
+            Toast.makeText(this, "No default vault has been set!", Toast.LENGTH_SHORT).show()
+            return
         }
 
-        loadVaultFileUri = defaultVaultFileUri
-        loadVault()
+        loadVault(defaultVaultFileUri)
     }
 
-    private fun newVault() {
-        val newVaultIntent = Intent(this, VaultViewer::class.java)
-        startActivity(newVaultIntent)
-    }
+    private fun newVault() =
+        startActivity(Intent(this, VaultViewer::class.java))
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -84,8 +75,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main_layout)
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-
-        sharedPreferences = getSharedPreferences("KryptonPreferences", Context.MODE_PRIVATE)
 
         btnLoadVault.setOnClickListener { loadVault() }
         btnLoadDefaultVault.setOnClickListener { loadDefaultVault() }
