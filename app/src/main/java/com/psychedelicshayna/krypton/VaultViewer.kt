@@ -18,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_vault_account_viewer.*
-import org.apache.commons.io.IOUtils
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.*
@@ -214,10 +213,9 @@ class VaultViewer : AppCompatActivity() {
             null
         )
 
-        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
-        alertDialogBuilder.setView(vaultCredentialsPromptView)
+        val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
+            setView(vaultCredentialsPromptView)
 
-        alertDialogBuilder.apply {
             setCancelable(true)
             setTitle("Retype Your Password")
 
@@ -230,10 +228,9 @@ class VaultViewer : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
-        }
 
-        val alertDialog: AlertDialog = alertDialogBuilder.create()
-        alertDialog.show()
+            create().apply { show() }
+        }
 
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val editTextPassword: EditText =
@@ -372,13 +369,13 @@ class VaultViewer : AppCompatActivity() {
         val buttonSecurityDialogDisableEncryption: Button =
             vaultSecurityDialogView.findViewById(R.id.buttonDialogVaultSecurityDisableEncryption)
 
-        val alertDialogBuilder = AlertDialog.Builder(this).apply {
+        val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
             setView(vaultSecurityDialogView)
             setCancelable(true)
             setTitle("Configure Vault Security")
-        }
 
-        val alertDialog: AlertDialog = alertDialogBuilder.create()
+            create().apply { show() }
+        }
 
         buttonSecurityDialogEnableEncryption.setOnClickListener {
             val password: String = editTextSecurityDialogPassword.text.toString()
@@ -547,95 +544,53 @@ class VaultViewer : AppCompatActivity() {
 //    }
 
     private fun saveVault(uri: Uri? = null) {
-        val vaultFileUri: Uri = uri ?: activeVaultFileUri.let {
-            if (it != null) { it } else {
-                Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
-                return
-            }
+        val vaultFileUri: Uri = uri ?: activeVaultFileUri ?: run {
+            Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
+            return
         }
 
         saveVaultAs(vaultFileUri)
     }
 
     private fun saveVaultAs(uri: Uri? = null) {
-        val vaultFileUri: Uri = uri.let {
-            if (it != null) {
-                it
-            } else {
-                Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                    flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    type = "*/*.vlt"
+        val vaultFileUri: Uri = uri ?: run {
+            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                type = "*/*.vlt"
 
-                    startActivityForResult(this, ActivityResultRequestCodes.AccountViewer.saveVaultAs)
-                }
+                startActivityForResult(this, ActivityResultRequestCodes.AccountViewer.saveVaultAs)
+            }
 
-                return@saveVaultAs
+            return@saveVaultAs
+        }
+
+        val vaultData: ByteArray =
+            vaultAdapter.getVault().dumpToJsonObject().toString().toByteArray().run {
+                if (vaultEncryptionEnabled) kryptonCrypto.encrypt(this)
+                else this
+            }
+
+        contentResolver.openFileDescriptor(vaultFileUri, "wt")?.let { parcelFileDescriptor ->
+            FileOutputStream(parcelFileDescriptor.fileDescriptor).use { fileOutputStream ->
+                fileOutputStream.write(vaultData)
             }
         }
 
-        val vaultData: ByteArray = try {
-            vaultAdapter.getVault().dumpToJsonObject()
-        } catch (exception: Exception) {
-            Toast.makeText(
-                this,
-                "Cannot save vault! Exception occurred during JSON serialization; " +
-                    "the source data was probably invalid in some way.",
-                Toast.LENGTH_LONG
-            ).show()
-
-            return
-        }.let { // Attempt to turn the JSONObject into a string.
-            try {
-                it.toString()
-            } catch (exception: Exception) {
+        val vaultDataWritten: ByteArray =
+            contentResolver.openFileDescriptor(vaultFileUri, "r")?.let { parcelFileDescriptor ->
+                FileInputStream(parcelFileDescriptor.fileDescriptor).use { fileInputStream ->
+                    fileInputStream.readBytes()
+                }
+            } ?: run {
                 Toast.makeText(
                     this,
-                    "Cannot save vault! Exception occurred when attempting to turn " +
-                        "the JSONObject into a string.",
-                    Toast.LENGTH_SHORT
+                    "Could not open a file descriptor to the file when re-reading the vault to " +
+                        "compare the hashes!",
+                    Toast.LENGTH_LONG
                 ).show()
 
                 return@saveVaultAs
             }
-        }.toByteArray().let { // Attempt to encrypt the string's bytes if vault encryption is enabled.
-            if (vaultEncryptionEnabled) {
-                try {
-                    kryptonCrypto.encrypt(it)
-                } catch (exception: Exception) {
-                    Toast.makeText(
-                        this,
-                        "Cannot save vault! Exception occurred during encryption. " +
-                            "If the data is important, maybe try without encryption?",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    return@saveVaultAs
-                }
-            } else {
-                it
-            }
-        }
-
-        contentResolver.openFileDescriptor(vaultFileUri, "wt")?.let { parcelFileDescriptor ->
-            FileOutputStream(parcelFileDescriptor.fileDescriptor).use { fileOutputStream ->
-                fileOutputStream.flush()
-                fileOutputStream.write(vaultData)
-                fileOutputStream.close()
-            }
-        }
-
-        val vaultDataWritten: ByteArray = contentResolver.openFileDescriptor(vaultFileUri, "r")?.let { parcelFileDescriptor ->
-            FileInputStream(parcelFileDescriptor.fileDescriptor).let { fileInputStream ->
-                val data = fileInputStream.readBytes()
-                fileInputStream.close()
-                data
-            }
-        }.let {
-            if (it != null) { it } else {
-                Toast.makeText(this, "Could not re-read the data! Something went wrong!", Toast.LENGTH_LONG).show()
-                return
-            }
-        }
 
         val vaultDataHashInRam: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
         val vaultDataHashOnDisk: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultDataWritten)
@@ -646,42 +601,26 @@ class VaultViewer : AppCompatActivity() {
             false
         )
 
-        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
-        alertDialogBuilder.setView(dialogIntegrityCheckResultView)
-
-        val etIntegrityCheckRamHash: TextView = dialogIntegrityCheckResultView.findViewById<TextView>(R.id.etIntegrityCheckRamHash).let {
-            if (it != null) {
-                it
-            } else {
-                Toast.makeText(
-                    this,
-                    "Couldn't find TextView etIntegrityCheckRamHash" +
-                        ", was null!",
-                    Toast.LENGTH_LONG
-                ).show()
-                return
-            }
-        }
+        val editTextIntegrityCheckRamHash: TextView =
+            dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckRamHash)
 
         val editTextIntegrityCheckDiskHash: TextView =
             dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckDiskHash)
 
-        alertDialogBuilder.apply {
+        AlertDialog.Builder(this).apply {
             setView(dialogIntegrityCheckResultView)
 
-            etIntegrityCheckRamHash.text = vaultDataHashInRam.joinToString("") { byte ->
-                "%02x".format(byte)
-            }
+            editTextIntegrityCheckRamHash.text =
+                vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
 
-            editTextIntegrityCheckDiskHash.text = vaultDataHashOnDisk.joinToString("") { byte ->
-                "%02x".format(byte)
-            }
+            editTextIntegrityCheckDiskHash.text =
+                vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
 
             if (vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
                 setTitle("Integrity Check Passed!")
                 setMessage("The SHA-256 hash of the vault in RAM matches the hash of the vault on the disk.")
 
-                etIntegrityCheckRamHash.setTextColor(Color.GREEN)
+                editTextIntegrityCheckRamHash.setTextColor(Color.GREEN)
                 editTextIntegrityCheckDiskHash.setTextColor(Color.GREEN)
 
                 vaultBackup.accounts.clear()
@@ -696,10 +635,12 @@ class VaultViewer : AppCompatActivity() {
                         "is to use Save As to save the vault to a new location instead."
                 )
 
-                etIntegrityCheckRamHash.setTextColor(Color.RED)
+                editTextIntegrityCheckRamHash.setTextColor(Color.RED)
                 editTextIntegrityCheckDiskHash.setTextColor(Color.RED)
             }
-        }.create().show()
+
+            create().apply { show() }
+        }
     }
 
     private fun loadVaultFile(vaultFileUri: Uri) {
@@ -737,14 +678,14 @@ class VaultViewer : AppCompatActivity() {
                 )
 
                 vaultBackup = vaultAdapter.getVault().clone()
-                vaultEncryptionEnabled = true
+                vaultEncryptionEnabled = false
 
                 return@loadVaultFile
             } catch (except: JSONException) {
                 Toast.makeText(
                     this,
                     "There was a problem with the JSON structure! The JSON is valid, but a " +
-                            "different structure was expected!",
+                        "different structure was expected!",
                     Toast.LENGTH_LONG
                 ).show()
 
