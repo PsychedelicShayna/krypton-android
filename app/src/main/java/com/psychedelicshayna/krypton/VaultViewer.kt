@@ -7,7 +7,6 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -20,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_vault_account_viewer.*
 import org.json.JSONException
 import org.json.JSONObject
-import java.io.*
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
@@ -130,14 +128,14 @@ class VaultViewer : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, resultData)
 
         if (resultCode == RESULT_OK && requestCode == ActivityResultRequestCodes.AccountViewer.saveVaultAs) {
-            resultData?.data?.also {
+            resultData?.data?.also { selectedFileUri ->
                 contentResolver.takePersistableUriPermission(
-                    it,
+                    selectedFileUri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                         or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 )
 
-                saveVaultAs(it)
+                saveVaultAs(selectedFileUri)
             }
         }
 
@@ -556,13 +554,26 @@ class VaultViewer : AppCompatActivity() {
     private fun saveVaultAs(uri: Uri? = null) {
         val vaultFileUri: Uri = uri ?: run {
             Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                type = "*/*.vlt"
+                flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+
+                type = "*/*"
 
                 startActivityForResult(this, ActivityResultRequestCodes.AccountViewer.saveVaultAs)
             }
 
             return@saveVaultAs
+        }
+
+        contentResolver.persistedUriPermissions.find { uriPermission ->
+            uriPermission.uri == vaultFileUri
+        } ?: run {
+            contentResolver.takePersistableUriPermission(
+                vaultFileUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
         }
 
         val vaultData: ByteArray =
@@ -571,95 +582,123 @@ class VaultViewer : AppCompatActivity() {
                 else this
             }
 
-        contentResolver.openFileDescriptor(vaultFileUri, "wt")?.let { parcelFileDescriptor ->
-            FileOutputStream(parcelFileDescriptor.fileDescriptor).use { fileOutputStream ->
-                fileOutputStream.write(vaultData)
-            }
+        contentResolver.openOutputStream(vaultFileUri, "wt")?.use { outputStream ->
+            outputStream.write(vaultData)
         }
 
-        val vaultDataWritten: ByteArray =
-            contentResolver.openFileDescriptor(vaultFileUri, "r")?.let { parcelFileDescriptor ->
-                FileInputStream(parcelFileDescriptor.fileDescriptor).use { fileInputStream ->
-                    fileInputStream.readBytes()
-                }
-            } ?: run {
-                Toast.makeText(
-                    this,
-                    "Could not open a file descriptor to the file when re-reading the vault to " +
-                        "compare the hashes!",
-                    Toast.LENGTH_LONG
-                ).show()
+        val integrityChecker = object {
+            private fun attemptReadingWrittenData() {
+                contentResolver.openInputStream(vaultFileUri)?.use { inputStream ->
+                    inputStream.readBytes()
+                }?.also { data ->
+                    performComparison(data)
+                } ?: run {
+                    val alertDialog: AlertDialog = AlertDialog.Builder(this@VaultViewer).run {
+                        setCancelable(true)
+                        setTitle("Read Failure")
 
-                return@saveVaultAs
+                        setMessage(
+                            "Tried to re-read the written vault file to calculate its hash, but an" +
+                                    "input stream to the file could not be opened."
+                        )
+
+                        setPositiveButton("Retry") { _, _ -> }
+                        setNegativeButton("Cancel") { _, _ -> }
+
+                        create().apply { show() }
+                    }
+
+                    alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        alertDialog.dismiss()
+                        attemptReadingWrittenData()
+                    }
+                }
             }
 
-        val vaultDataHashInRam: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
-        val vaultDataHashOnDisk: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultDataWritten)
+            private fun performComparison(dataReadFromDisk: ByteArray) {
+                val vaultDataHashInRam: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
+                val vaultDataHashOnDisk: ByteArray = MessageDigest.getInstance("SHA-256").digest(dataReadFromDisk)
 
-        val dialogIntegrityCheckResultView: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_integrity_check_result,
-            null,
-            false
-        )
-
-        val editTextIntegrityCheckRamHash: TextView =
-            dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckRamHash)
-
-        val editTextIntegrityCheckDiskHash: TextView =
-            dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckDiskHash)
-
-        AlertDialog.Builder(this).apply {
-            setView(dialogIntegrityCheckResultView)
-
-            editTextIntegrityCheckRamHash.text =
-                vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
-
-            editTextIntegrityCheckDiskHash.text =
-                vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
-
-            if (vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
-                setTitle("Integrity Check Passed!")
-                setMessage("The SHA-256 hash of the vault in RAM matches the hash of the vault on the disk.")
-
-                editTextIntegrityCheckRamHash.setTextColor(Color.GREEN)
-                editTextIntegrityCheckDiskHash.setTextColor(Color.GREEN)
-
-                vaultBackup.accounts.clear()
-                vaultBackup.accounts.addAll(vaultAdapter.getVault().accounts)
-                activeVaultFileUri = vaultFileUri
-            } else {
-                setTitle("Integrity Check Failed!")
-
-                setMessage(
-                    "The SHA-256 hash of the vault in RAM does not match the hash of the " +
-                        "vault on the disk! The data was not stored properly. The recommended action " +
-                        "is to use Save As to save the vault to a new location instead."
+                val dialogIntegrityCheckResultView: View = LayoutInflater.from(this@VaultViewer).inflate(
+                    R.layout.dialog_integrity_check_result,
+                    null,
+                    false
                 )
 
-                editTextIntegrityCheckRamHash.setTextColor(Color.RED)
-                editTextIntegrityCheckDiskHash.setTextColor(Color.RED)
+                val editTextIntegrityCheckRamHash: TextView =
+                    dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckRamHash)
+
+                val editTextIntegrityCheckDiskHash: TextView =
+                    dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckDiskHash)
+
+                editTextIntegrityCheckRamHash.text =
+                    vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
+
+                editTextIntegrityCheckDiskHash.text =
+                    vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
+
+                val alertDialog: AlertDialog = AlertDialog.Builder(this@VaultViewer).run {
+                    setView(dialogIntegrityCheckResultView)
+
+                    if (vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
+                        setTitle("Integrity Check Passed!")
+                        setMessage("The SHA-256 hash of the vault in RAM matches the hash of the vault on the disk.")
+
+                        setPositiveButton("Okay") { _, _ -> }
+
+                        editTextIntegrityCheckRamHash.setTextColor(Color.GREEN)
+                        editTextIntegrityCheckDiskHash.setTextColor(Color.GREEN)
+
+                        vaultBackup.accounts.clear()
+                        vaultBackup.accounts.addAll(vaultAdapter.getVault().accounts)
+
+                        activeVaultFileUri = vaultFileUri
+                    } else {
+                        setTitle("Integrity Check Failed!")
+
+                        setMessage(
+                            "The SHA-256 hash of the vault in RAM does not match the hash of the " +
+                                    "vault on the disk! The data was not stored properly. The recommended action " +
+                                    "is to use Save As to save the vault to a new location instead."
+                        )
+
+                        setPositiveButton("Retry") { _, _ -> }
+                        setNegativeButton("Cancel") { _, _ -> }
+
+                        editTextIntegrityCheckRamHash.setTextColor(Color.RED)
+                        editTextIntegrityCheckDiskHash.setTextColor(Color.RED)
+                    }
+
+                    create().apply { show() }
+                }
+
+                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                    alertDialog.dismiss()
+
+                    if (alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).text == "Retry") {
+                        attemptReadingWrittenData()
+                    }
+                }
             }
 
-            create().apply { show() }
+            fun attemptIntegrityCheck() = attemptReadingWrittenData()
         }
+
+        integrityChecker.attemptIntegrityCheck()
     }
 
     private fun loadVaultFile(vaultFileUri: Uri) {
-        val vaultFileDescriptor: ParcelFileDescriptor =
-            contentResolver.openFileDescriptor(vaultFileUri, "r") ?: run {
+        val fileBytes: ByteArray =
+            contentResolver.openInputStream(vaultFileUri)?.use { inputStream ->
+                inputStream.readBytes()
+            } ?: run {
                 Toast.makeText(
                     this,
-                    "Cannot open a file descriptor to the vault file.",
+                    "Tried to load vault file, but an input stream to the file could not be opened!",
                     Toast.LENGTH_LONG
                 ).show()
 
-                finish()
-                return
-            }
-
-        val fileBytes: ByteArray =
-            FileInputStream(vaultFileDescriptor.fileDescriptor).use { fileInputStream ->
-                fileInputStream.readBytes()
+                return@loadVaultFile
             }
 
         // Attempt to parse the file's bytes as if it were plaintext JSON.
