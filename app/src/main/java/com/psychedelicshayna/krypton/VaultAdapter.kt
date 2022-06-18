@@ -45,7 +45,6 @@ class VaultAdapter(
             view: View?,
             menuInfo: ContextMenu.ContextMenuInfo?
         ) {
-
             menu?.let { contextMenu ->
                 MenuInflater(parentContext).inflate(R.menu.menu_account_viewer_account_context_menu, contextMenu)
 

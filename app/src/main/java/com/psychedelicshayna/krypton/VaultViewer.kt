@@ -67,9 +67,8 @@ class VaultViewer : AppCompatActivity() {
             adapter = vaultAdapter
         }
 
-        activityAccountViewerButtonAddAccount.setOnClickListener(::addAccount)
-        activityAccountViewerButtonSave.setOnClickListener(::onSaveButtonClickListener)
-
+        activityAccountViewerButtonAddAccount.setOnClickListener { addAccount() }
+        activityAccountViewerButtonSave.setOnClickListener { saveVault() }
         activityAccountViewerButtonSaveAs.setOnClickListener { saveVaultAs() }
         activityAccountViewerButtonSetDefaultVault.setOnClickListener { setDefaultVault() }
 
@@ -194,57 +193,6 @@ class VaultViewer : AppCompatActivity() {
                 vaultAdapter.getVaultAccountIndexFromDisplayVaultAccountIndex(position)?.also {
                     vaultAdapter.removeVaultAccount(it)
                 }
-            }
-        }
-    }
-
-    private fun onSaveButtonClickListener(view: View) {
-        activeVaultFileUri ?: run {
-            Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        if (!vaultEncryptionEnabled)
-            return saveVault()
-
-        val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
-            R.layout.dialog_input_vault_password,
-            null
-        )
-
-        val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
-            setView(vaultCredentialsPromptView)
-
-            setCancelable(true)
-            setTitle("Retype Your Password")
-
-            setPositiveButton("Encrypt") { _, _ -> }
-
-            setNeutralButton("Cancel") { _, _ ->
-                Toast.makeText(
-                    this@VaultViewer,
-                    "Vault wasn't saved, password wasn't provided!",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-
-            create().apply { show() }
-        }
-
-        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            val editTextPassword: EditText =
-                vaultCredentialsPromptView.findViewById(R.id.etPassword)
-
-            if (kryptonCrypto.verifyPassword(editTextPassword.text.toString())) {
-                alertDialog.dismiss()
-                saveVault()
-            } else {
-                Toast.makeText(
-                    this,
-                    "The password doesn't match the password " +
-                        "used to load the vault!",
-                    Toast.LENGTH_LONG
-                ).show()
             }
         }
     }
@@ -411,7 +359,7 @@ class VaultViewer : AppCompatActivity() {
         alertDialog.show()
     }
 
-    private fun addAccount(view: View) {
+    private fun addAccount() {
         val dialogNewAccountView: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_input_account_name,
             null
@@ -502,53 +450,56 @@ class VaultViewer : AppCompatActivity() {
         }
     }
 
-//    private fun dumpVaultJson(): JSONObject {
-//        return JSONObject().apply {
-//            for(vaultAccount in vaultAdapter.storageVault.accounts) {
-//                this.put(vaultAccount.name, JSONObject().apply {
-//                    for(accountEntry in vaultAccount.entries) {
-//                        put(accountEntry.key, accountEntry.value)
-//                    }
-//                })
-//            }
-//        }
-//    }
-//
-//    private fun loadVaultJson(vaultDataJson: JSONObject): Boolean {
-//        vaultAdapter.clearVault()
-//
-//        try {
-//            for(accountName in vaultDataJson.keys()) {
-//                val accountEntriesMap: MutableMap<String, String> = mutableMapOf()
-//                val accountEntries: JSONObject = vaultDataJson.getJSONObject(accountName)
-//
-//                for(accountEntry: String in accountEntries.keys()) {
-//                    accountEntriesMap[accountEntry] = accountEntries.getString(accountEntry)
-//                }
-//
-//                vaultAdapter.addVaultAccount(Vault.Account(accountName, accountEntriesMap))
-//            }
-//
-//            vaultBackup.clear()
-//            vaultBackup.addAll(vaultAdapter.getVaultAccounts())
-//        } catch(exception: JSONException) {
-//            Toast.makeText(this, "Encountered exception when adding entries to viewer. " +
-//                    "The JSON was loaded and parsed, but the structure might be wrong.", Toast.LENGTH_LONG).show()
-//
-//            vaultAdapter.clearVault()
-//            return false
-//        }
-//
-//        return true
-//    }
-
-    private fun saveVault(uri: Uri? = null) {
-        val vaultFileUri: Uri = uri ?: activeVaultFileUri ?: run {
+    private fun saveVault() {
+        activeVaultFileUri ?: run {
             Toast.makeText(this, "No vault file was opened! Use Save As instead.", Toast.LENGTH_LONG).show()
             return
         }
 
-        saveVaultAs(vaultFileUri)
+        if (vaultEncryptionEnabled) {
+            val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
+                R.layout.dialog_input_vault_password,
+                null
+            )
+
+            val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
+                setView(vaultCredentialsPromptView)
+
+                setCancelable(true)
+                setTitle("Retype Your Password")
+
+                setPositiveButton("Encrypt") { _, _ -> }
+
+                setNeutralButton("Cancel") { _, _ ->
+                    Toast.makeText(
+                        this@VaultViewer,
+                        "Vault wasn't saved, password wasn't provided!",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                create().apply { show() }
+            }
+
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val editTextPassword: EditText =
+                    vaultCredentialsPromptView.findViewById(R.id.etPassword)
+
+                if (kryptonCrypto.verifyPassword(editTextPassword.text.toString())) {
+                    alertDialog.dismiss()
+                    saveVaultAs(activeVaultFileUri)
+                } else {
+                    Toast.makeText(
+                        this,
+                        "The password doesn't match the password " +
+                            "used to load the vault!",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        } else {
+            saveVaultAs(activeVaultFileUri)
+        }
     }
 
     private fun saveVaultAs(uri: Uri? = null) {
@@ -599,7 +550,7 @@ class VaultViewer : AppCompatActivity() {
 
                         setMessage(
                             "Tried to re-read the written vault file to calculate its hash, but an" +
-                                    "input stream to the file could not be opened."
+                                "input stream to the file could not be opened."
                         )
 
                         setPositiveButton("Retry") { _, _ -> }
@@ -658,8 +609,8 @@ class VaultViewer : AppCompatActivity() {
 
                         setMessage(
                             "The SHA-256 hash of the vault in RAM does not match the hash of the " +
-                                    "vault on the disk! The data was not stored properly. The recommended action " +
-                                    "is to use Save As to save the vault to a new location instead."
+                                "vault on the disk! The data was not stored properly. The recommended action " +
+                                "is to use Save As to save the vault to a new location instead."
                         )
 
                         setPositiveButton("Retry") { _, _ -> }
