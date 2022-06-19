@@ -24,12 +24,13 @@
 
         <activity
             android:name=".ActivityEntryBrowser"
-            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan"
             android:configChanges="orientation"/>
 
         <activity
             android:name=".ActivityAccountBrowser"
             android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan"
             android:configChanges="orientation"/>
 
     </application>

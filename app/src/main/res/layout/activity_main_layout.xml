@@ -16,22 +16,18 @@
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="New Vault"
-
-        android:layout_marginTop="550dp"
-        app:layout_constraintBottom_toTopOf="@+id/btn_load_vault"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btn_load_vault"/>
 
     <Button
         android:id="@+id/btn_load_vault"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Load Vault"
-        app:layout_constraintBottom_toTopOf="@id/btn_new_vault"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_load_default_vault"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btn_load_default_vault"/>
 
     <Button
         android:id="@+id/btn_load_default_vault"
@@ -39,7 +35,6 @@
         android:layout_height="60dp"
         android:text="Load Default Vault"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_load_vault"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
