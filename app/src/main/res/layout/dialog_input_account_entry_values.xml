@@ -11,21 +11,21 @@
     android:paddingEnd="8dp">
 
     <EditText
-        android:id="@+id/dialogEntryValuesInputEditTextEntryName"
+        android:id="@+id/et_entry_name"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:inputType="text"
         android:hint="@string/dialog_entry_values_input_edittext_entry_name_hint"/>
 
     <EditText
-        android:id="@+id/dialogEntryValuesInputEditTextEntryValue"
+        android:id="@+id/et_entry_value"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:inputType="text"
         android:hint="@string/dialog_entry_values_input_edittext_entry_value_hint"/>
 
     <Button
-        android:id="@+id/dialogEntryValuesInputButtonPasswordGenerator"
+        android:id="@+id/btn_password_generator"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="@string/dialog_entry_values_input_button_password_generator"/>

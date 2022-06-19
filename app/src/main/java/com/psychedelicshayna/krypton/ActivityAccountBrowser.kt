@@ -15,17 +15,24 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.activity_vault_account_viewer.*
+import com.psychedelicshayna.krypton.databinding.ActivityAccountBrowserLayoutBinding
+import com.psychedelicshayna.krypton.databinding.DialogInputAccountNameBinding
+import com.psychedelicshayna.krypton.databinding.DialogInputVaultPasswordBinding
+import com.psychedelicshayna.krypton.databinding.DialogIntegrityCheckResultBinding
+import com.psychedelicshayna.krypton.databinding.DialogVaultDiffBinding
+import com.psychedelicshayna.krypton.databinding.DialogVaultSecurityConfigurationBinding
+import kotlinx.android.synthetic.main.activity_account_browser_layout.*
 import org.json.JSONException
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
-class VaultViewer : AppCompatActivity() {
+class ActivityAccountBrowser : AppCompatActivity() {
+    private lateinit var ui: ActivityAccountBrowserLayoutBinding
+
     private lateinit var clipboardManager: ClipboardManager
 
-    private lateinit var vaultAdapter: VaultAdapter
+    private lateinit var vaultAdapter: VaultAccountAdapter
     private var vaultBackup: Vault = Vault()
 
     private val kryptonCrypto: KryptonCrypto = KryptonCrypto()
@@ -35,11 +42,11 @@ class VaultViewer : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_vault_account_viewer)
+        ui = ActivityAccountBrowserLayoutBinding.inflate(layoutInflater)
+        setContentView(ui.root)
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-
-        vaultAdapter = VaultAdapter(this, Vault())
+        vaultAdapter = VaultAccountAdapter(this, Vault())
 
         vaultAdapter.onBindViewHolderListener = { holder, position ->
             holder.onContextMenuItemClickListener = { menuItem, position, contextMenu, view, contextMenuInfo ->
@@ -51,7 +58,7 @@ class VaultViewer : AppCompatActivity() {
 
                 val openEntryViewerIntent = Intent(
                     this,
-                    VaultAccountEntryViewer::class.java
+                    ActivityEntryBrowser::class.java
                 ).apply {
                     putExtra("VaultAccount", clickedVaultAccount)
                 }
@@ -62,24 +69,24 @@ class VaultViewer : AppCompatActivity() {
 
         activeVaultFileUri = intent.getStringExtra("VaultFileUri")?.let { Uri.parse(it) }
 
-        findViewById<RecyclerView>(R.id.activityAccountViewerRecyclerViewVaultAccounts).apply {
-            layoutManager = LinearLayoutManager(this@VaultViewer)
+        ui.rvAccounts.apply {
+            layoutManager = LinearLayoutManager(this@ActivityAccountBrowser)
             adapter = vaultAdapter
         }
 
-        activityAccountViewerButtonAddAccount.setOnClickListener { addAccount() }
-        activityAccountViewerButtonSave.setOnClickListener { saveVault() }
-        activityAccountViewerButtonSaveAs.setOnClickListener { saveVaultAs() }
-        activityAccountViewerButtonSetDefaultVault.setOnClickListener { setDefaultVault() }
+        ui.btnAddAccount.setOnClickListener { addAccount() }
+        ui.btnSave.setOnClickListener { saveVault() }
+        ui.btnSaveAs.setOnClickListener { saveVaultAs() }
+        ui.btnDiff.setOnClickListener { diffVault() }
 
-        activityAccountViewerButtonRevertChanges.setOnClickListener {
+        ui.btnRevertChanges.setOnClickListener {
             vaultAdapter.setVault(vaultBackup)
         }
 
-        activityAccountViewerButtonDiff.setOnClickListener { diffVault() }
-        activityAccountViewerButtonSecurity.setOnClickListener { configureVaultSecurity() }
+        ui.btnSetDefaultVault.setOnClickListener { setDefaultVault() }
+        ui.btnSecurity.setOnClickListener { configureVaultSecurity() }
 
-        activityAccountViewerSearchViewAccountSearch.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        ui.svAccountSearch.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(text: String?): Boolean {
                 return false
             }
@@ -120,7 +127,7 @@ class VaultViewer : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        setContentView(R.layout.activity_vault_account_viewer)
+        setContentView(R.layout.activity_account_browser_layout)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
@@ -143,7 +150,7 @@ class VaultViewer : AppCompatActivity() {
                 val updatedVaultAccount: Vault.Account =
                     (getSerializableExtra("VaultAccount") as Vault.Account?) ?: run {
                         Toast.makeText(
-                            this@VaultViewer,
+                            this@ActivityAccountBrowser,
                             "Error! Received null as the " +
                                 "updated vault account extra!",
                             Toast.LENGTH_LONG
@@ -155,7 +162,7 @@ class VaultViewer : AppCompatActivity() {
                 val updatedVaultAccountIndex: Int =
                     vaultAdapter.getVaultAccountIndexByName(updatedVaultAccount.name) ?: run {
                         Toast.makeText(
-                            this@VaultViewer,
+                            this@ActivityAccountBrowser,
                             "Error! The index of the updated " +
                                 "account was null!",
                             Toast.LENGTH_LONG
@@ -216,22 +223,15 @@ class VaultViewer : AppCompatActivity() {
     }
 
     private fun diffVault() {
-        val vaultDiffDialogView: View = LayoutInflater.from(this).inflate(
+        val dialogVaultDiff: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_vault_diff,
             null
         )
 
-        val dialogVaultDiffTextViewEntriesAdded: TextView =
-            vaultDiffDialogView.findViewById(R.id.dialogVaultDiffTextViewEntriesAdded)
-
-        val dialogVaultDiffTextViewEntriesRemoved: TextView =
-            vaultDiffDialogView.findViewById(R.id.dialogVaultDiffTextViewEntriesRemoved)
-
-        val dialogVaultDiffTextViewEntriesChanged: TextView =
-            vaultDiffDialogView.findViewById(R.id.dialogVaultDiffTextViewEntriesChanged)
+        val uiDialogVaultDiff = DialogVaultDiffBinding.bind(dialogVaultDiff)
 
         val alertDialogBuilder = AlertDialog.Builder(this).apply {
-            setView(vaultDiffDialogView)
+            setView(dialogVaultDiff)
             setCancelable(true)
         }
 
@@ -287,70 +287,64 @@ class VaultViewer : AppCompatActivity() {
         }
 
         if (entriesAdded.isNotEmpty())
-            dialogVaultDiffTextViewEntriesAdded.text = entriesAdded.joinToString("\n")
+            uiDialogVaultDiff.tvDiffAdded.text = entriesAdded.joinToString("\n")
 
         if (entriesRemoved.isNotEmpty())
-            dialogVaultDiffTextViewEntriesRemoved.text = entriesRemoved.joinToString("\n")
+            uiDialogVaultDiff.tvDiffRemoved.text = entriesRemoved.joinToString("\n")
 
         if (entriesChanged.isNotEmpty())
-            dialogVaultDiffTextViewEntriesChanged.text = entriesChanged.joinToString("\n")
+            uiDialogVaultDiff.tvDiffChanged.text = entriesChanged.joinToString("\n")
 
         alertDialog.show()
     }
 
     private fun configureVaultSecurity() {
-        val vaultSecurityDialogView: View = LayoutInflater.from(this).inflate(
+        val dialogVaultSecurityConfiguration: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_vault_security_configuration,
             null
         )
 
-        val editTextSecurityDialogPassword: EditText =
-            vaultSecurityDialogView.findViewById(R.id.editTextDialogVaultSecurityPassword)
-
-        val editTextSecurityDialogConfirmPassword: EditText =
-            vaultSecurityDialogView.findViewById(R.id.editTextDialogVaultSecurityConfirmPassword)
-
-        val buttonSecurityDialogEnableEncryption: Button =
-            vaultSecurityDialogView.findViewById(R.id.buttonDialogVaultSecurityEnableEncryption)
-
-        val buttonSecurityDialogDisableEncryption: Button =
-            vaultSecurityDialogView.findViewById(R.id.buttonDialogVaultSecurityDisableEncryption)
+        val uiDialogVaultSecurityConfiguration =
+            DialogVaultSecurityConfigurationBinding.bind(dialogVaultSecurityConfiguration)
 
         val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
-            setView(vaultSecurityDialogView)
+            setView(dialogVaultSecurityConfiguration)
             setCancelable(true)
             setTitle("Configure Vault Security")
 
             create().apply { show() }
         }
 
-        buttonSecurityDialogEnableEncryption.setOnClickListener {
-            val password: String = editTextSecurityDialogPassword.text.toString()
-            val confirmationPassword: String = editTextSecurityDialogConfirmPassword.text.toString()
+        uiDialogVaultSecurityConfiguration.btnEnableEncryption.setOnClickListener {
+            val password: String = uiDialogVaultSecurityConfiguration.etNewPassword.text.toString()
+            val confirmationPassword: String = uiDialogVaultSecurityConfiguration.etNewPasswordConfirm.text.toString()
 
             if (password.isEmpty() || confirmationPassword.isEmpty()) {
                 Toast.makeText(
                     this,
-                    "Supply a password first; populate " +
-                        "both password fields.",
+                    "Supply a password first; populate both password fields.",
                     Toast.LENGTH_LONG
                 ).show()
             } else if (!password.contentEquals(confirmationPassword)) {
                 Toast.makeText(
                     this,
-                    "The confirmation password doesn't " +
-                        "match the original password!",
+                    "The confirmation password doesn't match the original password!",
                     Toast.LENGTH_LONG
                 ).show()
             } else {
                 kryptonCrypto.setCryptoParameters(password)
                 vaultEncryptionEnabled = true
-                Toast.makeText(this, "Encryption key set successfully.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Encryption key set successfully.",
+                    Toast.LENGTH_SHORT
+                ).show()
+
                 alertDialog.dismiss()
             }
         }
 
-        buttonSecurityDialogDisableEncryption.setOnClickListener {
+        uiDialogVaultSecurityConfiguration.btnDisableEncryption.setOnClickListener {
             Toast.makeText(this, "Encryption has been disabled.", Toast.LENGTH_LONG).show()
             vaultEncryptionEnabled = false
             alertDialog.dismiss()
@@ -360,16 +354,15 @@ class VaultViewer : AppCompatActivity() {
     }
 
     private fun addAccount() {
-        val dialogNewAccountView: View = LayoutInflater.from(this).inflate(
+        val dialogInputAccountName: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_input_account_name,
             null
         )
 
-        val etAccountName: EditText =
-            dialogNewAccountView.findViewById<EditText>(R.id.dialogInputAccountNameEditTextAccountName)
+        val uiDialogInputAccountName = DialogInputAccountNameBinding.bind(dialogInputAccountName)
 
         val alertDialogBuilder = AlertDialog.Builder(this).apply {
-            setView(dialogNewAccountView)
+            setView(dialogInputAccountName)
             setCancelable(true)
             setTitle("Specify Account Name")
 
@@ -381,7 +374,7 @@ class VaultViewer : AppCompatActivity() {
         alertDialog.show()
 
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            val accountName: String = etAccountName.text.toString()
+            val accountName: String = uiDialogInputAccountName.etAccountName.text.toString()
 
             if (accountName.isBlank()) {
                 Toast.makeText(this, "Enter an account name first. Name cannot be blank.", Toast.LENGTH_LONG).show()
@@ -399,20 +392,19 @@ class VaultViewer : AppCompatActivity() {
     }
 
     private fun editAccountName(position: Int) {
-        val dialogAccountNameInput: View = LayoutInflater.from(this).inflate(
+        val dialogInputAccountName: View = LayoutInflater.from(this).inflate(
             R.layout.dialog_input_account_name,
             null
         )
 
+        val uiDialogInputAccountName = DialogInputAccountNameBinding.bind(dialogInputAccountName)
+
         val vaultAccount: Vault.Account = vaultAdapter.getDisplayVaultAccount(position) ?: return
 
-        val editTextAccountName: EditText =
-            dialogAccountNameInput.findViewById(R.id.dialogInputAccountNameEditTextAccountName)
-
-        editTextAccountName.setText(vaultAccount.name)
+        uiDialogInputAccountName.etAccountName.setText(vaultAccount.name)
 
         val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this).apply {
-            setView(dialogAccountNameInput)
+            setView(dialogInputAccountName)
             setCancelable(true)
             setTitle("Enter New Account Name")
 
@@ -424,7 +416,7 @@ class VaultViewer : AppCompatActivity() {
         alertDialog.show()
 
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            val newAccountName: String = editTextAccountName.text.toString()
+            val newAccountName: String = uiDialogInputAccountName.etAccountName.text.toString()
 
             if (newAccountName.isBlank()) {
                 Toast.makeText(this, "Enter an account name first. Name cannot be blank.", Toast.LENGTH_LONG).show()
@@ -457,13 +449,15 @@ class VaultViewer : AppCompatActivity() {
         }
 
         if (vaultEncryptionEnabled) {
-            val vaultCredentialsPromptView: View = LayoutInflater.from(this).inflate(
+            val dialogInputVaultPassword: View = LayoutInflater.from(this).inflate(
                 R.layout.dialog_input_vault_password,
                 null
             )
 
+            val uiDialogInputVaultPassword = DialogInputVaultPasswordBinding.bind(dialogInputVaultPassword)
+
             val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
-                setView(vaultCredentialsPromptView)
+                setView(dialogInputVaultPassword)
 
                 setCancelable(true)
                 setTitle("Retype Your Password")
@@ -472,7 +466,7 @@ class VaultViewer : AppCompatActivity() {
 
                 setNeutralButton("Cancel") { _, _ ->
                     Toast.makeText(
-                        this@VaultViewer,
+                        this@ActivityAccountBrowser,
                         "Vault wasn't saved, password wasn't provided!",
                         Toast.LENGTH_LONG
                     ).show()
@@ -482,10 +476,7 @@ class VaultViewer : AppCompatActivity() {
             }
 
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val editTextPassword: EditText =
-                    vaultCredentialsPromptView.findViewById(R.id.etPassword)
-
-                if (kryptonCrypto.verifyPassword(editTextPassword.text.toString())) {
+                if (kryptonCrypto.verifyPassword(uiDialogInputVaultPassword.etPassword.text.toString())) {
                     alertDialog.dismiss()
                     saveVaultAs(activeVaultFileUri)
                 } else {
@@ -544,7 +535,7 @@ class VaultViewer : AppCompatActivity() {
                 }?.also { data ->
                     performComparison(data)
                 } ?: run {
-                    val alertDialog: AlertDialog = AlertDialog.Builder(this@VaultViewer).run {
+                    val alertDialog: AlertDialog = AlertDialog.Builder(this@ActivityAccountBrowser).run {
                         setCancelable(true)
                         setTitle("Read Failure")
 
@@ -570,17 +561,19 @@ class VaultViewer : AppCompatActivity() {
                 val vaultDataHashInRam: ByteArray = MessageDigest.getInstance("SHA-256").digest(vaultData)
                 val vaultDataHashOnDisk: ByteArray = MessageDigest.getInstance("SHA-256").digest(dataReadFromDisk)
 
-                val dialogIntegrityCheckResultView: View = LayoutInflater.from(this@VaultViewer).inflate(
+                val dialogIntegrityCheckResultView: View = LayoutInflater.from(this@ActivityAccountBrowser).inflate(
                     R.layout.dialog_integrity_check_result,
                     null,
                     false
                 )
 
+                val uiIntegrityCheckResult = DialogIntegrityCheckResultBinding.bind(dialogIntegrityCheckResultView)
+
                 val editTextIntegrityCheckRamHash: TextView =
-                    dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckRamHash)
+                    uiIntegrityCheckResult.etRamHash
 
                 val editTextIntegrityCheckDiskHash: TextView =
-                    dialogIntegrityCheckResultView.findViewById(R.id.etIntegrityCheckDiskHash)
+                    uiIntegrityCheckResult.etDiskHash
 
                 editTextIntegrityCheckRamHash.text =
                     vaultDataHashInRam.joinToString("") { byte -> "%02x".format(byte) }
@@ -588,7 +581,7 @@ class VaultViewer : AppCompatActivity() {
                 editTextIntegrityCheckDiskHash.text =
                     vaultDataHashOnDisk.joinToString("") { byte -> "%02x".format(byte) }
 
-                val alertDialog: AlertDialog = AlertDialog.Builder(this@VaultViewer).run {
+                val alertDialog: AlertDialog = AlertDialog.Builder(this@ActivityAccountBrowser).run {
                     setView(dialogIntegrityCheckResultView)
 
                     if (vaultDataHashInRam.contentEquals(vaultDataHashOnDisk)) {
@@ -662,11 +655,7 @@ class VaultViewer : AppCompatActivity() {
         // If it worked, attempt to load the JSONObject vault data.
         fileContentsJson?.also { json ->
             try {
-                vaultAdapter.setVault(
-                    Vault().apply {
-                        loadFromJsonObject(json)
-                    }
-                )
+                vaultAdapter.setVault(Vault().apply { loadFromJsonObject(json) })
 
                 vaultBackup = vaultAdapter.getVault().clone()
                 vaultEncryptionEnabled = false
@@ -692,27 +681,26 @@ class VaultViewer : AppCompatActivity() {
             null
         )
 
+        val uiDialogInputVaultPassword = DialogInputVaultPasswordBinding.bind(dialogInputVaultPassword)
+
         val alertDialog: AlertDialog = AlertDialog.Builder(this).run {
             setCancelable(false)
             setTitle("Provide Decryption Parameters")
             setView(dialogInputVaultPassword)
 
             setPositiveButton("Decrypt") { _, _ -> }
-            setNeutralButton("Cancel") { _, _ -> this@VaultViewer.finish() }
+            setNeutralButton("Cancel") { _, _ -> this@ActivityAccountBrowser.finish() }
 
             create().apply { show() }
         }
 
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val password: String =
-                dialogInputVaultPassword.findViewById<EditText>(R.id.etPassword).run {
-                    text.toString()
-                }
+                uiDialogInputVaultPassword.etPassword.text.toString()
 
             val ivMaskLength: Int =
-                dialogInputVaultPassword.findViewById<EditText>(R.id.etIVMaskLength).run {
-                    text.toString().toIntOrNull() ?: KryptonCrypto.CryptoConstants.aesBlockSize
-                }
+                uiDialogInputVaultPassword.etIvMaskLength.text.toString().toIntOrNull()
+                    ?: KryptonCrypto.CryptoConstants.aesBlockSize
 
             if (ivMaskLength < KryptonCrypto.CryptoConstants.aesBlockSize) {
                 Toast.makeText(
@@ -736,9 +724,7 @@ class VaultViewer : AppCompatActivity() {
             decryptedFileContentsJson?.also { json ->
                 try {
                     vaultAdapter.setVault(
-                        Vault().apply {
-                            loadFromJsonObject(json)
-                        }
+                        Vault().apply { loadFromJsonObject(json) }
                     )
 
                     vaultBackup = vaultAdapter.getVault().clone()

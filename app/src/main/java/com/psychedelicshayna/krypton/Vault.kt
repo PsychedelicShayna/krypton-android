@@ -24,6 +24,11 @@ class Vault : Serializable {
 
     var accounts: MutableList<Account> = mutableListOf()
 
+    fun clone(): Vault =
+        Vault().also { vaultCopy ->
+            vaultCopy.accounts.addAll(accounts)
+        }
+
     fun dumpToJsonObject(): JSONObject {
         val vaultObject = JSONObject()
 
@@ -58,9 +63,4 @@ class Vault : Serializable {
 
         accounts = newAccounts
     }
-
-    fun clone(): Vault =
-        Vault().also { vaultCopy ->
-            vaultCopy.accounts.addAll(accounts)
-        }
 }

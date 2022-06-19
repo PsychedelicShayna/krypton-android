@@ -10,7 +10,7 @@
     android:paddingTop="8dp">
 
     <EditText
-        android:id="@+id/editTextDialogVaultSecurityPassword"
+        android:id="@+id/et_new_password"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:inputType="textPassword"
@@ -18,7 +18,7 @@
         android:hint="Password"/>
 
     <EditText
-        android:id="@+id/editTextDialogVaultSecurityConfirmPassword"
+        android:id="@+id/et_new_password_confirm"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:inputType="textPassword"
@@ -26,13 +26,13 @@
         android:hint="Confirm Password"/>
 
     <Button
-        android:id="@+id/buttonDialogVaultSecurityEnableEncryption"
+        android:id="@+id/btn_enable_encryption"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="Set Encryption Key"/>
 
     <Button
-        android:id="@+id/buttonDialogVaultSecurityDisableEncryption"
+        android:id="@+id/btn_disable_encryption"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="Disable Encryption"/>

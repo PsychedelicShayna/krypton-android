@@ -73,7 +73,7 @@ class VaultAccountEntryAdapter(
             onCreateViewHolderListener?.invoke(parent, viewType)
 
             // Allow TextView responsible for holding entry values to be scrollable.
-            viewHolder.representedItemView.findViewById<TextView>(R.id.itemAccountEntryTextViewEntryValue)?.apply {
+            viewHolder.representedItemView.findViewById<TextView>(R.id.tv_entry_value)?.apply {
                 movementMethod = ScrollingMovementMethod()
 
                 setOnTouchListener(
@@ -88,8 +88,8 @@ class VaultAccountEntryAdapter(
 
     override fun onBindViewHolder(holder: EntryItemViewHolder, position: Int) {
         holder.itemView.apply {
-            itemAccountEntryTextViewEntryName.text = accountEntryPairs[position].first
-            itemAccountEntryTextViewEntryValue.text = accountEntryPairs[position].second
+            tv_entry_name.text = accountEntryPairs[position].first
+            tv_entry_value.text = accountEntryPairs[position].second
         }
 
         onBindViewHolderListener?.invoke(holder, position)

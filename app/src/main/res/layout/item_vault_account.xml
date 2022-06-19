@@ -11,7 +11,7 @@
     android:paddingEnd="8dp">
 
     <TextView
-        android:id="@+id/tvVaultAccountName"
+        android:id="@+id/tv_account_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -19,10 +19,8 @@
         android:textSize="21sp"/>
 
     <View
-        android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="2dp"
         android:background="?android:attr/listDivider" />
-
 
 </LinearLayout>

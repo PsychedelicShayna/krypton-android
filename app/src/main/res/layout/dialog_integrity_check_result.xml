@@ -10,7 +10,7 @@
     android:layout_marginBottom="8dp">
 
     <TextView
-        android:id="@+id/etIntegrityCheckRamHashTitle"
+        android:id="@+id/et_ram_hash_title"
         android:text="SHA-256 Hash Of Vault In RAM"
         android:textSize="18sp"
         android:textAlignment="center"
@@ -21,36 +21,27 @@
         android:layout_height="20dp"/>
 
     <View
-        android:id="@+id/integrityCheckDivider1"
-
         android:layout_width="match_parent"
         android:layout_height="1dp"
-
         android:background="?android:attr/listDivider"/>
 
     <TextView
-        android:id="@+id/etIntegrityCheckRamHash"
+        android:id="@+id/et_ram_hash"
 
         android:layout_width="match_parent"
         android:layout_height="40dp"
-
         android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp"
-
-        android:text="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         android:textSize="17sp"/>
 
     <View
-        android:id="@+id/integrityCheckDivider2"
-
         android:layout_width="match_parent"
         android:layout_height="1dp"
-
         android:layout_marginBottom="16dp"
         android:background="?android:attr/listDivider"/>
 
     <TextView
-        android:id="@+id/etIntegrityCheckDiskHashTitle"
+        android:id="@+id/et_disk_hash_title"
         android:text="SHA-256 Hash Of Vault On Disk"
         android:textSize="18sp"
         android:textAlignment="center"
@@ -61,30 +52,22 @@
         android:layout_height="20dp"/>
 
     <View
-        android:id="@+id/integrityCheckDivider3"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider" />
 
     <TextView
-        android:id="@+id/etIntegrityCheckDiskHash"
-        android:text="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-
+        android:id="@+id/et_disk_hash"
         android:textSize="17sp"
-
         android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp"
-
         android:layout_width="match_parent"
         android:layout_height="40dp"/>
 
     <View
-        android:id="@+id/integrityCheckDivider4"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-
         android:layout_marginBottom="8dp"
-
         android:background="?android:attr/listDivider"/>
 
 </LinearLayout>

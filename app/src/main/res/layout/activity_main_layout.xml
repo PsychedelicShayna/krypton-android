@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_alignBottom="@id/btnNewVault"
+    android:layout_alignBottom="@id/btn_new_vault"
     tools:context=".MainActivity"
     android:layout_marginStart="8dp"
     android:layout_marginEnd="8dp"
@@ -12,34 +12,34 @@
     android:layout_marginTop="8dp">
 
     <Button
-        android:id="@+id/btnNewVault"
+        android:id="@+id/btn_new_vault"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="New Vault"
 
         android:layout_marginTop="550dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnLoadVault"
+        app:layout_constraintBottom_toTopOf="@+id/btn_load_vault"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
     <Button
-        android:id="@+id/btnLoadVault"
+        android:id="@+id/btn_load_vault"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Load Vault"
-        app:layout_constraintBottom_toTopOf="@id/btnNewVault"
+        app:layout_constraintBottom_toTopOf="@id/btn_new_vault"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnLoadDefaultVault"/>
+        app:layout_constraintTop_toBottomOf="@+id/btn_load_default_vault"/>
 
     <Button
-        android:id="@+id/btnLoadDefaultVault"
+        android:id="@+id/btn_load_default_vault"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:text="Load Default Vault"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnLoadVault"
+        app:layout_constraintTop_toBottomOf="@id/btn_load_vault"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 

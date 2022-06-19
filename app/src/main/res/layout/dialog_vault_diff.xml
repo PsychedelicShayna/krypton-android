@@ -10,7 +10,7 @@
     android:paddingTop="24dp">
 
     <TextView
-        android:id="@+id/dialogVaultDiffTextViewEntriesAddedTitle"
+        android:id="@+id/tv_diff_added_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -20,13 +20,12 @@
         android:textAlignment="center"/>
 
     <View
-        android:id="@+id/dialogVaultDiffDivider1"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider" />
 
     <TextView
-        android:id="@+id/dialogVaultDiffTextViewEntriesAdded"
+        android:id="@+id/tv_diff_added"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
@@ -34,7 +33,7 @@
         android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/dialogVaultDiffTextViewEntriesRemovedTitle"
+        android:id="@+id/tv_diff_removed_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -43,14 +42,13 @@
         android:textAlignment="center"/>
 
     <View
-        android:id="@+id/dialogVaultDiffDivider2"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginBottom="8dp"
         android:background="?android:attr/listDivider" />
 
     <TextView
-        android:id="@+id/dialogVaultDiffTextViewEntriesRemoved"
+        android:id="@+id/tv_diff_removed"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
@@ -58,7 +56,7 @@
         android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/dialogVaultDiffTextViewEntriesChangedTitle"
+        android:id="@+id/tv_diff_changed_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -67,13 +65,12 @@
         android:textAlignment="center"/>
 
     <View
-        android:id="@+id/dialogVaultDiffDivider3"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider" />
 
     <TextView
-        android:id="@+id/dialogVaultDiffTextViewEntriesChanged"
+        android:id="@+id/tv_diff_changed"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"

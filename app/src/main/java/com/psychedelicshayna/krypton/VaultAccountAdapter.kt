@@ -8,10 +8,10 @@ import androidx.recyclerview.widget.RecyclerView
 import java.lang.IndexOutOfBoundsException
 import java.util.*
 
-class VaultAdapter(
+class VaultAccountAdapter(
     private val parentContext: Context,
     private val adaptedVault: Vault
-) : RecyclerView.Adapter<VaultAdapter.AccountItemViewHolder>() {
+) : RecyclerView.Adapter<VaultAccountAdapter.AccountItemViewHolder>() {
 
     // This instance is used to actually store the vault information, and make
     // modifications to that information. displayVault is synchronized with this
@@ -89,7 +89,7 @@ class VaultAdapter(
     }
 
     override fun onBindViewHolder(holder: AccountItemViewHolder, position: Int) {
-        holder.itemView.findViewById<TextView>(R.id.tvVaultAccountName).apply {
+        holder.itemView.findViewById<TextView>(R.id.tv_account_name).apply {
             text = displayVault.accounts[position].name
         }
 
