@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/item_save"
+        android:title="Save"/>
+
+    <item
+        android:id="@+id/item_save_as"
+        android:title="Save As"/>
+
+    <item
+        android:id="@+id/item_see_changes"
+        android:title="See Changes"/>
+
+    <item
+        android:id="@+id/item_revert_changes"
+        android:title="Revert Changes"/>
+
+    <item
+        android:id="@+id/item_config_encryption"
+        android:title="Configure Encryption"/>
+
+    <item
+        android:id="@+id/item_set_default"
+        android:title="Set Default Vault"/>
+</menu>

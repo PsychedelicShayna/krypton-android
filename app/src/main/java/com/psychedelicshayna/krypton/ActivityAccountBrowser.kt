@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.ContextMenu
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
@@ -44,6 +45,7 @@ class ActivityAccountBrowser : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         ui = ActivityAccountBrowserLayoutBinding.inflate(layoutInflater)
         setContentView(ui.root)
+        setSupportActionBar(ui.toolbar)
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         vaultAdapter = VaultAccountAdapter(this, Vault())
@@ -74,17 +76,7 @@ class ActivityAccountBrowser : AppCompatActivity() {
             adapter = vaultAdapter
         }
 
-        ui.btnAddAccount.setOnClickListener { addAccount() }
-        ui.btnSave.setOnClickListener { saveVault() }
-        ui.btnSaveAs.setOnClickListener { saveVaultAs() }
-        ui.btnDiff.setOnClickListener { diffVault() }
-
-        ui.btnRevertChanges.setOnClickListener {
-            vaultAdapter.setVault(vaultBackup)
-        }
-
-        ui.btnSetDefaultVault.setOnClickListener { setDefaultVault() }
-        ui.btnSecurity.setOnClickListener { configureVaultSecurity() }
+        ui.fabAddAccount.setOnClickListener { addAccount() }
 
         ui.svAccountSearch.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(text: String?): Boolean {
@@ -102,6 +94,11 @@ class ActivityAccountBrowser : AppCompatActivity() {
         })
 
         if (activeVaultFileUri != null) loadVaultFile(activeVaultFileUri!!)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_account_browser_actions, menu)
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onBackPressed() {
@@ -123,6 +120,36 @@ class ActivityAccountBrowser : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId) {
+            R.id.item_save -> {
+                saveVault()
+            }
+
+            R.id.item_save_as -> {
+                saveVaultAs()
+            }
+
+            R.id.item_see_changes -> {
+                diffVault()
+            }
+
+            R.id.item_revert_changes -> {
+                vaultAdapter.setVault(vaultBackup)
+            }
+
+            R.id.item_config_encryption -> {
+                configureVaultSecurity()
+            }
+
+            R.id.item_set_default -> {
+                setDefaultVault()
+            }
+        }
+
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
