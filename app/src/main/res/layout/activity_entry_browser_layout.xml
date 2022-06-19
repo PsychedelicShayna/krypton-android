@@ -5,10 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ActivityEntryBrowser"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
-    android:layout_marginStart="8dp"
-    android:layout_marginEnd="8dp">
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="16dp">
 
     <TextView
         android:id="@+id/tv_account_name_header"
@@ -20,8 +20,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/entry_browser_hdivider_1"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <View
         android:id="@+id/entry_browser_hdivider_1"
@@ -34,8 +33,7 @@
         app:layout_constraintBottom_toTopOf="@id/rv_entries"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"
-    />
+        android:layout_marginTop="8dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_entries"
@@ -44,8 +42,7 @@
         app:layout_constraintBottom_toTopOf="@id/entry_browser_hdivider_2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/entry_browser_hdivider_1"
-    />
+        app:layout_constraintTop_toBottomOf="@id/entry_browser_hdivider_1"/>
 
     <View
         android:id="@+id/entry_browser_hdivider_2"
@@ -55,26 +52,19 @@
         app:layout_constraintTop_toBottomOf="@id/rv_entries"
         app:layout_constraintBottom_toTopOf="@id/btn_add_entry"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-    />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <Button
         android:id="@+id/btn_add_entry"
         android:text="@string/btn_add_entry_text"
         android:layout_width="0dp"
         android:layout_height="60dp"
-
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-
         app:layout_constraintTop_toBottomOf="@id/entry_browser_hdivider_2"
-        app:layout_constraintBottom_toBottomOf="parent"
-
-        android:layout_marginTop="8dp"
-    />
-
-
-
-
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
