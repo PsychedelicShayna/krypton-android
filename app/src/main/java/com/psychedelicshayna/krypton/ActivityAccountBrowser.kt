@@ -316,8 +316,11 @@ class ActivityAccountBrowser : AppCompatActivity() {
         }
 
         uiDialogVaultSecurityConfiguration.btnEnableEncryption.setOnClickListener {
-            val password: String = uiDialogVaultSecurityConfiguration.etNewPassword.text.toString()
-            val confirmationPassword: String = uiDialogVaultSecurityConfiguration.etNewPasswordConfirm.text.toString()
+            val password: String =
+                uiDialogVaultSecurityConfiguration.etNewPassword.text.toString()
+
+            val confirmationPassword: String =
+                uiDialogVaultSecurityConfiguration.etNewPasswordConfirm.text.toString()
 
             if (password.isEmpty() || confirmationPassword.isEmpty()) {
                 Toast.makeText(
