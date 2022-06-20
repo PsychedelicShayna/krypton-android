@@ -62,9 +62,8 @@ class ActivityEntryBrowser : AppCompatActivity() {
         rv_entries.layoutManager = LinearLayoutManager(this)
         rv_entries.adapter = vaultAccountEntryAdapter
 
-        tv_account_name_header.text = viewingVaultAccount.name
-
-        uiActivityEntryBrowser.btnAddEntry.setOnClickListener { addEntry() }
+        uiActivityEntryBrowser.entryBrowserToolbar.title = viewingVaultAccount.name
+        uiActivityEntryBrowser.fabAddEntry.setOnClickListener { addEntry() }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -171,8 +170,12 @@ class ActivityEntryBrowser : AppCompatActivity() {
 
                 val passwordLength: Int =
                     uiDialogEntriesPasswordGenerator.etPasswordLength.run {
-                        if (length() > 0) text.toString().toInt()
-                        else 0
+                        if (length() in 1..6) {
+                            text.toString().toInt()
+                        } else {
+                            Toast.makeText(this@ActivityEntryBrowser, "Password length must be between 1 and 6 digits long.", Toast.LENGTH_LONG).show()
+                            0
+                        }
                     }
 
                 val performGenerate = {

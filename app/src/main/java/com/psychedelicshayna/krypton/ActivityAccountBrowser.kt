@@ -45,7 +45,7 @@ class ActivityAccountBrowser : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         ui = ActivityAccountBrowserLayoutBinding.inflate(layoutInflater)
         setContentView(ui.root)
-        setSupportActionBar(ui.toolbar)
+        setSupportActionBar(ui.accountBrowserToolbar)
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         vaultAdapter = VaultAccountAdapter(this, Vault())
